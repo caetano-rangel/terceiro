@@ -134,7 +134,7 @@ const ConfirmPage = () => {
           fontSize: '1rem', fontWeight: 700,
           background: 'linear-gradient(90deg,#15803d,#2dd4bf)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>Terceirão.app</span>
+        }}>terceirON</span>
       </div>
     </div>
   );

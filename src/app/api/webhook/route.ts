@@ -22,7 +22,7 @@ function calcularExpiracao(plano: string): string {
 //   const isPremium = plano === 'premium';
 //
 //   await resend.emails.send({
-//     from: 'Terceirão.app <contato@terceirao.app>',
+//     from: 'terceirON <contato@terceirao.app>',
 //     replyTo: 'contato@terceirao.app',
 //     to: email,
 //     subject: `A página da ${nomeTurma} está no ar! 🎓`,
@@ -32,7 +32,7 @@ function calcularExpiracao(plano: string): string {
 //         <!-- Header -->
 //         <div style="background: linear-gradient(135deg, #dcfce7, #ccfbf1); padding: 40px 32px; text-align: center;">
 //           <div style="font-size: 48px; margin-bottom: 12px;">🎓</div>
-//           <h1 style="font-size: 24px; color: #052e16; margin: 0; font-weight: 700;">Terceirão.app</h1>
+//           <h1 style="font-size: 24px; color: #052e16; margin: 0; font-weight: 700;">terceirON</h1>
 //           <p style="color: #4d7c5f; margin: 8px 0 0; font-size: 14px;">A página da sua turma — para sempre.</p>
 //         </div>
 //
@@ -72,7 +72,7 @@ function calcularExpiracao(plano: string): string {
 //         <!-- Footer -->
 //         <div style="background: #052e16; padding: 24px 32px; text-align: center;">
 //           <p style="color: #4d7c5f; font-size: 12px; margin: 0;">
-//             © 2025 Terceirão.app · Todos os direitos reservados<br/>
+//             © 2025 terceirON · Todos os direitos reservados<br/>
 //             Dúvidas? <a href="mailto:contato@terceirao.app" style="color: #86efac;">contato@terceirao.app</a>
 //           </p>
 //         </div>

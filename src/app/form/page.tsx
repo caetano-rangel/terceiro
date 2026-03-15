@@ -253,7 +253,7 @@ const Form = () => {
             fontSize: '1.3rem', fontWeight: 700,
             background: 'linear-gradient(90deg,#15803d,#2dd4bf)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>Terceirão.app</span>
+          }}>terceirON</span>
         </div>
 
         {/* Step indicator */}
@@ -608,7 +608,7 @@ const Form = () => {
           background: 'linear-gradient(90deg,#86efac,#2dd4bf)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           fontSize: '1.1rem', fontWeight: 700, marginBottom: 6,
-        }}>Terceirão.app</div>
+        }}>terceirON</div>
         <p style={{ color: '#4d7c5f', fontSize: '.82rem', marginBottom: 16 }}>
           A página da sua turma — para sempre.
         </p>
@@ -626,7 +626,7 @@ const Form = () => {
           ))}
         </div>
         <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>
-          Copyright © 2025 Terceirão.app · Todos os direitos reservados
+          Copyright © 2025 terceirON · Todos os direitos reservados
         </p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </footer>

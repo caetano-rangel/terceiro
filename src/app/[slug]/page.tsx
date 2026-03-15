@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import QRCode from 'qrcode';
-import useEmblaCarousel from 'embla-carousel-react';
 
 /* ── Tipos ── */
 interface Aluno {
@@ -54,6 +53,217 @@ function calcCountdown(dataFormatura: string): Countdown {
   };
 }
 
+/* ── Galeria carrossel centralizado ── */
+function GaleriaCarrossel({ fotos }: { fotos: string[] }) {
+  const [active, setActive]     = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  const startX   = useRef(0);
+  const dragging = useRef(false);
+
+  const prev = () => setActive(i => (i - 1 + fotos.length) % fotos.length);
+  const next = () => setActive(i => (i + 1) % fotos.length);
+
+  /* Swipe touch/mouse */
+  const onPointerDown = (e: React.PointerEvent) => {
+    dragging.current = true;
+    startX.current = e.clientX;
+    trackRef.current?.setPointerCapture(e.pointerId);
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    const dx = e.clientX - startX.current;
+    if (dx < -40) next();
+    else if (dx > 40) prev();
+  };
+
+  /* Índices visíveis: prev, active, next */
+  const len  = fotos.length;
+  const iPrev = (active - 1 + len) % len;
+  const iNext = (active + 1) % len;
+  const visible = len === 1
+    ? [{ idx: active, pos: 'center' }]
+    : len === 2
+    ? [{ idx: iPrev, pos: 'left' }, { idx: active, pos: 'center' }]
+    : [
+        { idx: iPrev,  pos: 'left'   },
+        { idx: active, pos: 'center' },
+        { idx: iNext,  pos: 'right'  },
+      ];
+
+  const styleFor = (pos: string): React.CSSProperties => {
+    if (pos === 'center') return {
+      width: isMobile ? '78%' : '68%',
+      height: isMobile ? 300 : 440,
+      borderRadius: 18, objectFit: 'cover',
+      boxShadow: '0 12px 40px rgba(34,197,94,.25)',
+      border: '2px solid #86efac',
+      transform: 'scale(1)',
+      opacity: 1,
+      zIndex: 2,
+      cursor: 'default',
+      transition: 'all .4s cubic-bezier(.22,1,.36,1)',
+      flexShrink: 0,
+    };
+    return {
+      width: isMobile ? '14%' : '28%',
+      height: isMobile ? 240 : 320,
+      borderRadius: isMobile ? 10 : 14,
+      objectFit: 'cover',
+      border: '1.5px solid #dcfce7',
+      transform: pos === 'left'
+        ? isMobile ? 'scale(0.85) translateX(32px)' : 'scale(0.88) translateX(12px)'
+        : isMobile ? 'scale(0.85) translateX(-32px)' : 'scale(0.88) translateX(-12px)',
+      opacity: isMobile ? 0.3 : 0.55,
+      zIndex: 1,
+      cursor: 'pointer',
+      transition: 'all .4s cubic-bezier(.22,1,.36,1)',
+      flexShrink: 0,
+    };
+  };
+
+  return (
+    <div style={{ marginBottom: 56 }}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <span style={{ display: 'inline-block', background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)', borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: '#15803d', fontWeight: 700 }}>
+          🖼️ Galeria da turma
+        </span>
+      </div>
+
+      {/* Track */}
+      <div
+        ref={trackRef}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 8, overflow: 'hidden', padding: '16px 0',
+          userSelect: 'none', touchAction: 'pan-y',
+          position: 'relative',
+        }}
+      >
+        {visible.map(({ idx, pos }) => (
+          <img
+            key={idx}
+            src={fotos[idx]}
+            alt={`Foto ${idx + 1}`}
+            style={styleFor(pos) as React.CSSProperties}
+            data-pos={pos}
+            onClick={() => {
+              if (pos === 'left')  prev();
+              if (pos === 'right') next();
+              if (pos === 'center') setLightbox(true);
+            }}
+            draggable={false}
+          />
+        ))}
+      </div>
+
+      {/* Dots */}
+      {fotos.length > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 8 }}>
+          {fotos.map((_, i) => (
+            <button key={i} onClick={() => setActive(i)} style={{
+              width: i === active ? 20 : 7, height: 7,
+              borderRadius: 99, border: 'none', cursor: 'pointer', padding: 0,
+              background: i === active ? 'linear-gradient(90deg,#86efac,#22c55e)' : '#dcfce7',
+              transition: 'all .3s',
+            }} />
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 999,
+            background: 'rgba(0,0,0,.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px',
+            animation: 'fadeInLb .2s ease',
+          }}
+        >
+          <style>{`@keyframes fadeInLb { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }`}</style>
+
+          {/* Botão fechar */}
+          <button
+            onClick={() => setLightbox(false)}
+            style={{
+              position: 'absolute', top: 20, right: 20,
+              background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)',
+              color: 'white', borderRadius: '50%', width: 40, height: 40,
+              fontSize: '1.2rem', cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'sans-serif', lineHeight: 1,
+            }}
+          >✕</button>
+
+          {/* Seta esquerda */}
+          {fotos.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); prev(); }}
+              style={{
+                position: 'absolute', left: 16,
+                background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)',
+                color: 'white', borderRadius: '50%', width: 44, height: 44,
+                fontSize: '1.4rem', cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >‹</button>
+          )}
+
+          {/* Foto */}
+          <img
+            src={fotos[active]}
+            alt="Foto ampliada"
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: '90vw', maxHeight: '88vh',
+              objectFit: 'contain', borderRadius: 16,
+              boxShadow: '0 24px 80px rgba(0,0,0,.5)',
+            }}
+          />
+
+          {/* Seta direita */}
+          {fotos.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); next(); }}
+              style={{
+                position: 'absolute', right: 16,
+                background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)',
+                color: 'white', borderRadius: '50%', width: 44, height: 44,
+                fontSize: '1.4rem', cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >›</button>
+          )}
+
+          {/* Contador */}
+          <div style={{
+            position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+            color: 'rgba(255,255,255,.6)', fontSize: '.82rem',
+          }}>
+            {active + 1} / {fotos.length}
+          </div>
+        </div>
+      )}
+
+
+    </div>
+  );
+}
+
 /* ── Página ── */
 const TurmaPage: React.FC<PageProps> = ({ params }) => {
   const [slug, setSlug]           = useState<string | null>(null);
@@ -61,7 +271,6 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<Countdown | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
   /* ── Carrega dados ── */
   useEffect(() => {
@@ -95,15 +304,6 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [turma]);
-
-  /* ── Carrossel auto-play ── */
-  useEffect(() => {
-    if (!emblaApi) return;
-    const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
-    emblaApi.on('select', onSelect);
-    const auto = setInterval(() => emblaApi.scrollNext(), 5000);
-    return () => { clearInterval(auto); emblaApi.off('select', onSelect); };
-  }, [emblaApi]);
 
   /* ── Música tema (premium) ── */
   useEffect(() => {
@@ -140,18 +340,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
     new Date(data + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
-    <div style={{ fontFamily: "'Nunito',sans-serif", minHeight: '100vh', background: 'linear-gradient(180deg,#f0fdf4 0%,#dcfce7 30%,#f0fdfa 100%)', color: '#052e16', overflowX: 'hidden' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap');
-        .pf { font-family: 'Playfair Display', Georgia, serif !important; }
-        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-        .fade-up { animation: fadeUp .7s ease forwards; }
-        .float   { animation: float 3s ease-in-out infinite; }
-        .embla            { overflow: hidden; border-radius: 20px; }
-        .embla__container { display: flex; }
-        .embla__slide     { flex: 0 0 100%; }
-      `}</style>
+    <div style={{ fontFamily: "'Nunito',sans-serif", minHeight: '100vh', background: '#f6fdf8', color: '#052e16', overflowX: 'hidden' }}>
 
       {/* Música tema */}
       {turma.plano === 'premium' && turma.musicaUrl && (
@@ -161,23 +350,23 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
       )}
 
       {/* ── HERO ── */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '64px 24px 48px', textAlign: 'center', background: 'linear-gradient(155deg,#f0fdf4 0%,#dcfce7 40%,#ccfbf1 100%)', borderBottom: '1px solid #86efac30' }}>
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 260, height: 260, background: 'radial-gradient(circle,rgba(134,239,172,.3),transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 200, height: 200, background: 'radial-gradient(circle,rgba(45,212,191,.2),transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '64px 24px 48px', textAlign: 'center', background: 'linear-gradient(155deg,#052e16 0%,#064e3b 50%,#0d4d4d 100%)', borderBottom: '1px solid #86efac20' }}>
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 260, height: 260, background: 'radial-gradient(circle,rgba(134,239,172,.15),transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 200, height: 200, background: 'radial-gradient(circle,rgba(45,212,191,.1),transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
 
         <div className="float" style={{ fontSize: 56, marginBottom: 16 }}>🎓</div>
-        <h1 className="pf fade-up" style={{ fontSize: 'clamp(2.4rem,8vw,4rem)', fontWeight: 700, lineHeight: 1.1, marginBottom: 12 }}>
+        <h1 className="pf fade-up" style={{ fontSize: 'clamp(2.4rem,8vw,4rem)', fontWeight: 700, lineHeight: 1.1, marginBottom: 12, color: 'white' }}>
           {turma.nomeTurma}
         </h1>
-        <p style={{ color: '#4d7c5f', fontSize: '.9rem', marginBottom: 10 }}>
+        <p style={{ color: '#86efac', fontSize: '.9rem', marginBottom: 10 }}>
           {turma.escola}{turma.cidade ? ` · ${turma.cidade}` : ''}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-block', background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)', borderRadius: 50, padding: '4px 16px', fontSize: '.75rem', fontWeight: 700, color: '#15803d' }}>
+          <span style={{ display: 'inline-block', background: 'rgba(255,255,255,.12)', borderRadius: 50, padding: '4px 16px', fontSize: '.75rem', fontWeight: 700, color: 'white', border: '1px solid rgba(255,255,255,.2)' }}>
             🎉 Formatura em {formatarData(turma.dataFormatura)}
           </span>
           {turma.plano === 'premium' && turma.musicaUrl && (
-            <span style={{ display: 'inline-block', background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)', borderRadius: 50, padding: '4px 16px', fontSize: '.75rem', fontWeight: 700, color: '#15803d' }}>
+            <span style={{ display: 'inline-block', background: 'rgba(255,255,255,.12)', borderRadius: 50, padding: '4px 16px', fontSize: '.75rem', fontWeight: 700, color: 'white', border: '1px solid rgba(255,255,255,.2)' }}>
               🎵 Toque para ouvir
             </span>
           )}
@@ -236,34 +425,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
         {/* ── GALERIA DE FOTOS ── */}
         {turma.fotos.length > 0 && (
-          <div style={{ marginBottom: 56 }}>
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <span style={{ display: 'inline-block', background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)', borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: '#15803d', fontWeight: 700 }}>
-                🖼️ Galeria da turma
-              </span>
-            </div>
-            <div className="embla" ref={emblaRef}>
-              <div className="embla__container">
-                {turma.fotos.map((url, i) => (
-                  <div key={i} className="embla__slide">
-                    <img src={url} alt={`Foto ${i + 1}`} style={{ width: '100%', maxHeight: 480, objectFit: 'cover', borderRadius: 20, border: '2px solid #dcfce7', boxShadow: '0 8px 32px rgba(134,239,172,.2)' }} />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {turma.fotos.length > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 14 }}>
-                {turma.fotos.map((_, i) => (
-                  <button key={i} onClick={() => emblaApi?.scrollTo(i)} style={{
-                    width: i === selectedIndex ? 20 : 8, height: 8,
-                    borderRadius: 99, border: 'none', cursor: 'pointer',
-                    background: i === selectedIndex ? 'linear-gradient(135deg,#86efac,#22c55e)' : '#dcfce7',
-                    transition: 'all .3s', padding: 0,
-                  }} />
-                ))}
-              </div>
-            )}
-          </div>
+          <GaleriaCarrossel fotos={turma.fotos} />
         )}
 
         {/* ── LISTA DA TURMA ── */}

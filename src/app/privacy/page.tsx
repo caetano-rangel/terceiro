@@ -29,7 +29,7 @@ export default function PrivacyPage() {
             fontSize: '1.2rem', fontWeight: 700,
             background: 'linear-gradient(90deg,#15803d,#2dd4bf)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>Terceirão.app</span>
+          }}>terceirON</span>
         </button>
         <span style={{ color: '#86efac', fontSize: '1rem' }}>›</span>
         <span style={{ fontSize: '.88rem', color: '#4d7c5f' }}>Política de privacidade</span>
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
       {/* Footer */}
       <footer style={{ background: '#052e16', padding: '28px 24px', textAlign: 'center' }}>
         <p style={{ color: '#4d7c5f', fontSize: '.75rem' }}>
-          © 2026 Terceirão.app · Todos os direitos reservados
+          © 2026 terceirON · Todos os direitos reservados
         </p>
       </footer>
     </div>

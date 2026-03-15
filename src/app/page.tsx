@@ -196,20 +196,20 @@ const Home: React.FC = () => {
       <nav style={{
         background: 'rgba(246,253,248,0.95)', backdropFilter: 'blur(14px)',
         borderBottom: '1px solid #dcfce7',
-        padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 100,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <span style={{ fontSize: 28 }}>🎓</span>
+          <span style={{ fontSize: 24 }}>🎓</span>
           <span className="pf" style={{
-            fontSize: '1.35rem', fontWeight: 700,
+            fontSize: '1.1rem', fontWeight: 700,
             background: 'linear-gradient(90deg,#15803d,#2dd4bf)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>Terceirão.app</span>
+          }}>TerceirON</span>
         </div>
         <button onClick={() => router.push('/form')} className="btn-green"
-          style={{ ...btnGreen, padding: '10px 22px', fontSize: '.88rem' }}>
-          Criar a página da turma
+          style={{ ...btnGreen, padding: '9px 16px', fontSize: '.78rem', whiteSpace: 'nowrap' }}>
+          Criar a página
         </button>
       </nav>
 
@@ -440,7 +440,7 @@ const Home: React.FC = () => {
           fontSize: '1.25rem', fontWeight: 700, marginBottom: 8,
           background: 'linear-gradient(90deg,#86efac,#2dd4bf)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-block',
-        }}>Terceirão.app</div>
+        }}>terceirON</div>
         <p style={{ color: '#4d7c5f', fontSize: '.88rem', marginBottom: 20 }}>
           A página da sua turma — para sempre.
         </p>
@@ -458,7 +458,7 @@ const Home: React.FC = () => {
           ))}
         </div>
         <p style={{ color: '#1a4a28', fontSize: '.75rem' }}>
-          Copyright © 2025 Terceirão.app · Todos os direitos reservados
+          Copyright © 2026 terceirON · Todos os direitos reservados
         </p>
       </footer>
     </div>

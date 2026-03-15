@@ -29,7 +29,7 @@ export default function TermsPage() {
             fontSize: '1.2rem', fontWeight: 700,
             background: 'linear-gradient(90deg,#15803d,#2dd4bf)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>Terceirão.app</span>
+          }}>terceirON</span>
         </button>
         <span style={{ color: '#86efac', fontSize: '1rem' }}>›</span>
         <span style={{ fontSize: '.88rem', color: '#4d7c5f' }}>Termos de uso</span>
@@ -48,11 +48,11 @@ export default function TermsPage() {
         {[
           {
             titulo: '1. Aceitação dos termos',
-            texto: 'Ao utilizar o Terceirão.app, você concorda com estes Termos de Uso. Se não concordar com algum ponto, por favor, não utilize nosso serviço. O uso continuado da plataforma implica aceitação integral destes termos.',
+            texto: 'Ao utilizar o terceirON, você concorda com estes Termos de Uso. Se não concordar com algum ponto, por favor, não utilize nosso serviço. O uso continuado da plataforma implica aceitação integral destes termos.',
           },
           {
             titulo: '2. Descrição do serviço',
-            texto: 'O Terceirão.app é uma plataforma que permite a criação de uma página digital personalizada para turmas do terceiro ano do ensino médio. O representante da turma preenche o formulário, realiza o pagamento único e recebe um link exclusivo com QR Code para compartilhar com a turma.',
+            texto: 'O terceirON é uma plataforma que permite a criação de uma página digital personalizada para turmas do terceiro ano do ensino médio. O representante da turma preenche o formulário, realiza o pagamento único e recebe um link exclusivo com QR Code para compartilhar com a turma.',
           },
           {
             titulo: '3. Cadastro e responsabilidades',
@@ -64,11 +64,11 @@ export default function TermsPage() {
           },
           {
             titulo: '5. Conteúdo publicado',
-            texto: 'Você é o único responsável pelo conteúdo enviado. É proibido publicar conteúdo ofensivo, discriminatório, ilegal ou que viole direitos de terceiros. O Terceirão.app se reserva o direito de remover páginas que violem estas diretrizes sem aviso prévio e sem direito a reembolso.',
+            texto: 'Você é o único responsável pelo conteúdo enviado. É proibido publicar conteúdo ofensivo, discriminatório, ilegal ou que viole direitos de terceiros. O terceirON se reserva o direito de remover páginas que violem estas diretrizes sem aviso prévio e sem direito a reembolso.',
           },
           {
             titulo: '6. Propriedade intelectual',
-            texto: 'A plataforma Terceirão.app, incluindo seu design, código e marca, são de propriedade exclusiva dos seus criadores. O conteúdo enviado pelo usuário (fotos, textos) permanece de propriedade do usuário, que concede ao Terceirão.app uma licença limitada para exibição na página criada.',
+            texto: 'A plataforma terceirON, incluindo seu design, código e marca, são de propriedade exclusiva dos seus criadores. O conteúdo enviado pelo usuário (fotos, textos) permanece de propriedade do usuário, que concede ao terceirON uma licença limitada para exibição na página criada.',
           },
           {
             titulo: '7. Disponibilidade',
@@ -115,7 +115,7 @@ export default function TermsPage() {
       {/* Footer */}
       <footer style={{ background: '#052e16', padding: '28px 24px', textAlign: 'center' }}>
         <p style={{ color: '#4d7c5f', fontSize: '.75rem' }}>
-          © 2026 Terceirão.app · Todos os direitos reservados
+          © 2026 terceirON · Todos os direitos reservados
         </p>
       </footer>
     </div>
