@@ -5,39 +5,50 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 /* ── Tipos ── */
 type Plano = 'basico' | 'premium';
-
 type Aluno = { nome: string; apelido: string };
-
 type Curiosidade = { categoria: string; resposta: string };
 
 type FormData = {
   plano: Plano;
-  // Turma
   nomeTurma: string;
   escola: string;
   cidade: string;
   dataFormatura: string;
   email: string;
-  // Alunos
   alunos: Aluno[];
-  // Mural
   mural: string;
-  // Curiosidades (premium)
+  // Básico
+  professorNome: string;
+  professorMateria: string;
+  instagram: string;
+  // Premium
   curiosidades: Curiosidade[];
-  // Música (premium)
   musicaUrl: string;
+  capsulaData: string;
+  capsulaMensagem: string;
+  tema: string;
 };
 
 type FieldErrors = Partial<Record<string, string>>;
 
+/* ── Temas disponíveis ── */
+const TEMAS = [
+  { id: 'verde',    nome: 'Verde Natureza', cor: '#22c55e', bg: '#f0fdf4' },
+  { id: 'roxo',     nome: 'Roxo Galáxia',  cor: '#8b5cf6', bg: '#f5f3ff' },
+  { id: 'rosa',     nome: 'Rosa Vibrante',  cor: '#ec4899', bg: '#fdf2f8' },
+  { id: 'azul',     nome: 'Azul Oceano',    cor: '#3b82f6', bg: '#eff6ff' },
+  { id: 'laranja',  nome: 'Laranja Sunset', cor: '#f97316', bg: '#fff7ed' },
+  { id: 'teal',     nome: 'Teal Moderno',   cor: '#14b8a6', bg: '#f0fdfa' },
+];
+
 /* ── Curiosidades padrão ── */
 const CURIOSIDADES_DEFAULT: Curiosidade[] = [
   { categoria: '😴 Quem dormiu mais na aula', resposta: '' },
-  { categoria: '📋 MVP da bagunça', resposta: '' },
-  { categoria: '🤫 Quem colou de quem', resposta: '' },
-  { categoria: '📱 Viciado no celular', resposta: '' },
-  { categoria: '🍕 Quem mais comia na aula', resposta: '' },
-  { categoria: '🏆 O mais inteligente da turma', resposta: '' },
+  { categoria: '📋 MVP da bagunça',           resposta: '' },
+  { categoria: '🤫 Quem colou de quem',       resposta: '' },
+  { categoria: '📱 Viciado no celular',       resposta: '' },
+  { categoria: '🍕 Quem mais comia na aula',  resposta: '' },
+  { categoria: '🏆 O mais inteligente',       resposta: '' },
 ];
 
 /* ── Compressão de imagem ── */
@@ -66,28 +77,59 @@ const compressImage = (file: File): Promise<File> => {
   });
 };
 
-/* ── Componente Field ── */
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+/* ── Field ── */
+function Field({ label, error, hint, children }: {
+  label: string; error?: string; hint?: string; children: React.ReactNode;
+}) {
   return (
     <div style={{ marginBottom: 20 }}>
       <label style={{ display: 'block', fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 2 }}>
         {label}
       </label>
+      {hint && <p style={{ fontSize: '.78rem', color: '#4d7c5f', marginBottom: 6 }}>{hint}</p>}
       {children}
       {error && <p style={{ color: '#ef4444', fontSize: '.78rem', marginTop: 4 }}>{error}</p>}
     </div>
   );
 }
 
+/* ── Badge premium ── */
+function PremiumBadge() {
+  return (
+    <span style={{
+      display: 'inline-block', marginLeft: 8,
+      background: 'linear-gradient(135deg,#f7fee7,#ecfccb)',
+      borderRadius: 50, padding: '2px 10px',
+      fontSize: '.7rem', color: '#3f6212', fontWeight: 700,
+      border: '1px solid #bef264', verticalAlign: 'middle',
+    }}>⭐ Premium</span>
+  );
+}
+
+/* ── Separador de seção ── */
+function SectionCard({ children, premium }: { children: React.ReactNode; premium?: boolean }) {
+  return (
+    <div style={{
+      background: 'white', borderRadius: 20, padding: '28px 24px',
+      border: premium ? '1.5px solid #bef264' : '1.5px solid #dcfce7',
+      boxShadow: '0 4px 20px rgba(134,239,172,.12)',
+      marginBottom: 20,
+    }}>
+      {children}
+    </div>
+  );
+}
+
 /* ── Form principal ── */
 const Form = () => {
-  const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const router = useRouter() as any;
   const searchParams = useSearchParams();
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep]               = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [files, setFiles] = useState<FileList | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null);
+  const [files, setFiles]             = useState<FileList | null>(null);
+  const [fileError, setFileError]     = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [formData, setFormData] = useState<FormData>({
@@ -95,8 +137,12 @@ const Form = () => {
     nomeTurma: '', escola: '', cidade: '', dataFormatura: '', email: '',
     alunos: [{ nome: '', apelido: '' }],
     mural: '',
+    professorNome: '', professorMateria: '',
+    instagram: '',
     curiosidades: CURIOSIDADES_DEFAULT,
     musicaUrl: '',
+    capsulaData: '', capsulaMensagem: '',
+    tema: 'verde',
   });
 
   useEffect(() => {
@@ -140,11 +186,7 @@ const Form = () => {
       return { ...p, alunos };
     });
   };
-
-  const addAluno = () => {
-    setFormData(p => ({ ...p, alunos: [...p.alunos, { nome: '', apelido: '' }] }));
-  };
-
+  const addAluno    = () => setFormData(p => ({ ...p, alunos: [...p.alunos, { nome: '', apelido: '' }] }));
   const removeAluno = (i: number) => {
     if (formData.alunos.length === 1) return;
     setFormData(p => ({ ...p, alunos: p.alunos.filter((_, idx) => idx !== i) }));
@@ -157,6 +199,7 @@ const Form = () => {
       return { ...p, curiosidades };
     });
   };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files;
@@ -173,10 +216,10 @@ const Form = () => {
   /* ── Validação step 1 ── */
   const validateStep1 = () => {
     const errs: FieldErrors = {};
-    if (!formData.nomeTurma)    errs.nomeTurma    = 'Campo obrigatório';
-    if (!formData.escola)       errs.escola       = 'Campo obrigatório';
+    if (!formData.nomeTurma)     errs.nomeTurma     = 'Campo obrigatório';
+    if (!formData.escola)        errs.escola        = 'Campo obrigatório';
     if (!formData.dataFormatura) errs.dataFormatura = 'Campo obrigatório';
-    if (!formData.email)        errs.email        = 'Campo obrigatório';
+    if (!formData.email)         errs.email         = 'Campo obrigatório';
     const alunosValidos = formData.alunos.filter(a => a.nome.trim());
     if (alunosValidos.length === 0) errs.alunos = 'Adicione pelo menos 1 aluno';
     setFieldErrors(errs);
@@ -189,8 +232,6 @@ const Form = () => {
     if (!files || files.length < 1) { setFileError('Envie pelo menos 1 foto.'); return; }
 
     const payload = new FormData();
-
-    // dados básicos
     payload.append('plano',        formData.plano);
     payload.append('nomeTurma',    formData.nomeTurma);
     payload.append('escola',       formData.escola);
@@ -199,15 +240,20 @@ const Form = () => {
     payload.append('email',        formData.email);
     payload.append('mural',        formData.mural);
     payload.append('alunos',       JSON.stringify(formData.alunos.filter(a => a.nome.trim())));
+    payload.append('professorNome',    formData.professorNome);
+    payload.append('professorMateria', formData.professorMateria);
+    payload.append('instagram',    formData.instagram);
 
     if (formData.plano === 'premium') {
-      payload.append('curiosidades', JSON.stringify(formData.curiosidades));
-      payload.append('musicaUrl',    formData.musicaUrl);
+      payload.append('curiosidades',    JSON.stringify(formData.curiosidades));
+      payload.append('musicaUrl',       formData.musicaUrl);
+      payload.append('capsulaData',     formData.capsulaData);
+      payload.append('capsulaMensagem', formData.capsulaMensagem);
+      payload.append('tema',            formData.tema);
     }
 
-    // fotos comprimidas
     const compressed = await Promise.all(Array.from(files).map(compressImage));
-    const totalSize = compressed.reduce((acc, f) => acc + f.size, 0);
+    const totalSize  = compressed.reduce((acc, f) => acc + f.size, 0);
     if (totalSize > 4 * 1024 * 1024) {
       setFileError('Fotos muito grandes. Use fotos menores ou em menor quantidade.');
       return;
@@ -216,13 +262,10 @@ const Form = () => {
 
     try {
       setIsSubmitting(true);
-      const res = await fetch('/api/create-checkout', { method: 'POST', body: payload });
+      const res  = await fetch('/api/create-checkout', { method: 'POST', body: payload });
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert('Erro ao processar pedido. Tente novamente.\n\n' + (data.error || 'Erro desconhecido'));
-      }
+      if (data.url) { window.location.href = data.url; }
+      else { alert('Erro ao processar pedido.\n\n' + (data.error || 'Erro desconhecido')); }
     } catch (err) {
       console.error('Erro no checkout:', err);
       alert('Erro de conexão. Verifique sua internet e tente novamente.');
@@ -232,7 +275,7 @@ const Form = () => {
   };
 
   return (
-    <div style={{ fontFamily: "'Nunito',sans-serif", background: '#f6fdf8', minHeight: '100vh', color: '#052e16', transition: 'background .4s' }}>
+    <div style={{ fontFamily: "'Nunito',sans-serif", background: '#f6fdf8', minHeight: '100vh', color: '#052e16' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap');
         .pf { font-family: 'Playfair Display', Georgia, serif !important; }
@@ -244,40 +287,31 @@ const Form = () => {
       <nav style={{
         background: 'rgba(246,253,248,.95)', backdropFilter: 'blur(14px)',
         borderBottom: '1px solid #dcfce7',
-        padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 100,
       }}>
         <div onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}>
-          <span style={{ fontSize: 26 }}>🎓</span>
+          <span style={{ fontSize: 24 }}>🎓</span>
           <span className="pf" style={{
-            fontSize: '1.3rem', fontWeight: 700,
+            fontSize: '1.1rem', fontWeight: 700,
             background: 'linear-gradient(90deg,#15803d,#2dd4bf)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>terceirON</span>
+          }}>TerceirON</span>
         </div>
-
         {/* Step indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {[1, 2].map(s => (
             <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
-                background: step >= s
-                  ? 'linear-gradient(135deg,#86efac,#22c55e,#15803d)'
-                  : '#dcfce7',
+                background: step >= s ? 'linear-gradient(135deg,#86efac,#22c55e,#15803d)' : '#dcfce7',
                 color: step >= s ? 'white' : '#15803d',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '.8rem', fontWeight: 700,
                 boxShadow: step >= s ? '0 4px 12px rgba(34,197,94,.35)' : 'none',
                 transition: 'all .3s',
               }}>{s}</div>
-              {s < 2 && (
-                <div style={{
-                  width: 24, height: 2,
-                  background: step > 1 ? '#22c55e' : '#dcfce7',
-                  borderRadius: 2, transition: 'background .3s',
-                }} />
-              )}
+              {s < 2 && <div style={{ width: 24, height: 2, background: step > 1 ? '#22c55e' : '#dcfce7', borderRadius: 2, transition: 'background .3s' }} />}
             </div>
           ))}
         </div>
@@ -290,20 +324,16 @@ const Form = () => {
       }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, background: 'radial-gradient(circle,rgba(134,239,172,.3),transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -40, left: -40, width: 180, height: 180, background: 'radial-gradient(circle,rgba(45,212,191,.18),transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-
         <span style={{
-          display: 'inline-block',
-          background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
-          borderRadius: 50, padding: '5px 18px', fontSize: '.8rem',
-          color: '#15803d', fontWeight: 700, marginBottom: 14,
+          display: 'inline-block', background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
+          borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: '#15803d', fontWeight: 700, marginBottom: 14,
         }}>
           {step === 1 ? '🎓 Dados da turma' : '📸 Fotos & extras'}
         </span>
-
         <h1 className="pf" style={{ fontSize: 'clamp(1.6rem,4vw,2.4rem)', fontWeight: 700, lineHeight: 1.25, color: '#052e16' }}>
           {step === 1
             ? <><em style={{ color: '#15803d', fontStyle: 'italic' }}>Configure</em> a página</>
-            : <>Quase lá! <em style={{ color: '#15803d', fontStyle: 'italic' }}>Adicione as fotos</em></>
+            : <>Quase lá! <em style={{ color: '#15803d', fontStyle: 'italic' }}>Adicione as fotos<br /></em></>
           }
         </h1>
       </div>
@@ -315,7 +345,7 @@ const Form = () => {
           {/* ═══ STEP 1 ═══ */}
           <div style={{ display: step === 1 ? 'block' : 'none' }}>
 
-            {/* Seletor de plano */}
+            {/* Seletor plano */}
             <div style={{
               background: 'white', borderRadius: 20, padding: 6,
               border: '1.5px solid #dcfce7', boxShadow: '0 4px 20px rgba(134,239,172,.15)',
@@ -329,27 +359,21 @@ const Form = () => {
                     cursor: 'pointer', fontFamily: "'Nunito',sans-serif",
                     fontWeight: 700, fontSize: '.82rem', lineHeight: 1.4,
                     transition: 'all .25s',
-                    background: formData.plano === p
-                      ? 'linear-gradient(135deg,#86efac,#22c55e,#15803d)'
-                      : 'transparent',
+                    background: formData.plano === p ? 'linear-gradient(135deg,#86efac,#22c55e,#15803d)' : 'transparent',
                     color: formData.plano === p ? 'white' : '#4d7c5f',
                     boxShadow: formData.plano === p ? '0 4px 14px rgba(34,197,94,.3)' : 'none',
                   }}
                 >
                   {p === 'basico'
                     ? <>Básico · 20 fotos<br />1 ano · R$39</>
-                    : <>Premium · 50 fotos<br />Música + curiosidades · R$79 ⭐</>
+                    : <>Premium · 50 fotos<br />Música + extras · R$79 ⭐</>
                   }
                 </button>
               ))}
             </div>
 
             {/* Dados da turma */}
-            <div style={{
-              background: 'white', borderRadius: 20, padding: '28px 24px',
-              border: '1.5px solid #dcfce7', boxShadow: '0 4px 20px rgba(134,239,172,.12)',
-              marginBottom: 20,
-            }}>
+            <SectionCard>
               <Field label="Nome da turma 🎓" error={fieldErrors.nomeTurma}>
                 <input type="text" name="nomeTurma" value={formData.nomeTurma} onChange={handleChange}
                   placeholder="Ex: 3º B — 2025"
@@ -362,8 +386,7 @@ const Form = () => {
               </Field>
               <Field label="Cidade 📍">
                 <input type="text" name="cidade" value={formData.cidade} onChange={handleChange}
-                  placeholder="São Paulo — SP"
-                  style={inputStyle} />
+                  placeholder="São Paulo — SP" style={inputStyle} />
               </Field>
               <Field label="Data da formatura 🎉" error={fieldErrors.dataFormatura}>
                 <input type="date" name="dataFormatura" value={formData.dataFormatura} onChange={handleChange}
@@ -374,69 +397,94 @@ const Form = () => {
                   placeholder="email@exemplo.com"
                   style={fieldErrors.email ? inputError : inputStyle} />
               </Field>
-            </div>
+            </SectionCard>
 
             {/* Alunos */}
-            <div style={{
-              background: 'white', borderRadius: 20, padding: '28px 24px',
-              border: fieldErrors.alunos ? '1.5px solid #f87171' : '1.5px solid #dcfce7',
-              boxShadow: '0 4px 20px rgba(134,239,172,.12)',
-              marginBottom: 20,
-            }}>
-              <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 16 }}>
+            <SectionCard>
+              <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 6 }}>
                 Alunos da turma 👥
               </p>
-              <p style={{ fontSize: '.82rem', color: '#4d7c5f', marginBottom: 20, lineHeight: 1.5 }}>
-                Nome completo e apelido de cada aluno. Aparecerão listados na página.
+              <p style={{ fontSize: '.82rem', color: '#4d7c5f', marginBottom: 16, lineHeight: 1.5 }}>
+                Nome e apelido de cada aluno.
               </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {formData.alunos.map((aluno, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <input
-                        type="text" placeholder={`Nome ${i + 1}`}
-                        value={aluno.nome}
-                        onChange={e => handleAlunoChange(i, 'nome', e.target.value)}
-                        style={{ ...inputStyle, marginTop: 0 }}
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <input
-                        type="text" placeholder="Apelido"
-                        value={aluno.apelido}
-                        onChange={e => handleAlunoChange(i, 'apelido', e.target.value)}
-                        style={{ ...inputStyle, marginTop: 0 }}
-                      />
-                    </div>
+                  <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input type="text" placeholder={`Nome ${i + 1}`} value={aluno.nome}
+                      onChange={e => handleAlunoChange(i, 'nome', e.target.value)}
+                      style={{ ...inputStyle, marginTop: 0, flex: 1 }} />
+                    <input type="text" placeholder="Apelido" value={aluno.apelido}
+                      onChange={e => handleAlunoChange(i, 'apelido', e.target.value)}
+                      style={{ ...inputStyle, marginTop: 0, flex: 1 }} />
                     {formData.alunos.length > 1 && (
                       <button type="button" onClick={() => removeAluno(i)}
-                        style={{
-                          background: '#fef2f2', border: '1px solid #fecaca',
-                          borderRadius: 10, padding: '12px 10px', cursor: 'pointer',
-                          color: '#f87171', fontSize: '.82rem', fontWeight: 700,
-                          fontFamily: "'Nunito',sans-serif", flexShrink: 0, marginTop: 0,
-                        }}>✕</button>
+                        style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 10px', cursor: 'pointer', color: '#f87171', fontSize: '.82rem', fontWeight: 700, fontFamily: "'Nunito',sans-serif", flexShrink: 0 }}>✕</button>
                     )}
                   </div>
                 ))}
               </div>
-
-              {fieldErrors.alunos && (
-                <p style={{ color: '#ef4444', fontSize: '.78rem', marginTop: 8 }}>{fieldErrors.alunos}</p>
-              )}
-
+              {fieldErrors.alunos && <p style={{ color: '#ef4444', fontSize: '.78rem', marginTop: 8 }}>{fieldErrors.alunos}</p>}
               <button type="button" onClick={addAluno}
-                style={{
-                  marginTop: 16, width: '100%', padding: '12px',
-                  background: '#f0fdf4', border: '1.5px dashed #86efac',
-                  borderRadius: 14, cursor: 'pointer', color: '#15803d',
-                  fontSize: '.88rem', fontWeight: 700,
-                  fontFamily: "'Nunito',sans-serif", transition: 'background .2s',
-                }}>
+                style={{ marginTop: 14, width: '100%', padding: '12px', background: '#f0fdf4', border: '1.5px dashed #86efac', borderRadius: 14, cursor: 'pointer', color: '#15803d', fontSize: '.88rem', fontWeight: 700, fontFamily: "'Nunito',sans-serif" }}>
                 + Adicionar aluno
               </button>
-            </div>
+            </SectionCard>
+
+            {/* Professor favorito — Básico */}
+            <SectionCard>
+              <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 6 }}>
+                Professor favorito 🍎
+              </p>
+              <Field label="Nome do professor">
+                <input type="text" name="professorNome" value={formData.professorNome} onChange={handleChange}
+                  placeholder="Ex: Prof. Carlos" style={inputStyle} />
+              </Field>
+              <Field label="Matéria">
+                <input type="text" name="professorMateria" value={formData.professorMateria} onChange={handleChange}
+                  placeholder="Ex: Matemática" style={inputStyle} />
+              </Field>
+            </SectionCard>
+
+            {/* Instagram — Básico */}
+            <SectionCard>
+              <Field label="Instagram da turma 📸"
+                hint="Aparece como link na página da turma.">
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#4d7c5f', fontSize: '.97rem', marginTop: 4 }}>@</span>
+                  <input type="text" name="instagram" value={formData.instagram} onChange={handleChange}
+                    placeholder="turma3b2025" style={{ ...inputStyle, paddingLeft: 32 }} />
+                </div>
+              </Field>
+            </SectionCard>
+
+            {/* Tema de cores — Premium */}
+            {formData.plano === 'premium' && (
+              <SectionCard premium>
+                <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 6 }}>
+                  Tema de cores 🎨 <PremiumBadge />
+                </p>
+                <p style={{ fontSize: '.82rem', color: '#4d7c5f', marginBottom: 16 }}>
+                  Escolha a paleta visual da página da turma.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+                  {TEMAS.map(t => (
+                    <button key={t.id} type="button"
+                      onClick={() => setFormData(p => ({ ...p, tema: t.id }))}
+                      style={{
+                        padding: '12px 8px', borderRadius: 14, border: 'none', cursor: 'pointer',
+                        background: formData.tema === t.id ? t.bg : 'white',
+                        outline: formData.tema === t.id ? `2px solid ${t.cor}` : '2px solid #dcfce7',
+                        transition: 'all .2s', fontFamily: "'Nunito',sans-serif",
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: t.cor }} />
+                      <span style={{ fontSize: '.72rem', fontWeight: 700, color: '#052e16', textAlign: 'center', lineHeight: 1.3 }}>{t.nome}</span>
+                    </button>
+                  ))}
+                </div>
+              </SectionCard>
+            )}
 
             <button type="button" className="btn-green"
               onClick={() => { if (validateStep1()) setStep(2); }}
@@ -448,12 +496,8 @@ const Form = () => {
           {/* ═══ STEP 2 ═══ */}
           <div style={{ display: step === 2 ? 'block' : 'none' }}>
 
-            {/* Upload de fotos */}
-            <div style={{
-              background: 'white', borderRadius: 20, padding: '28px 24px',
-              border: fileError ? '1.5px solid #f87171' : '1.5px solid #dcfce7',
-              boxShadow: '0 4px 20px rgba(134,239,172,.12)', marginBottom: 20,
-            }}>
+            {/* Fotos */}
+            <SectionCard>
               <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 12 }}>
                 Fotos da galera 📷
               </p>
@@ -461,7 +505,6 @@ const Form = () => {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 10, padding: '28px 16px', borderRadius: 14, cursor: 'pointer',
                 border: '2px dashed #86efac', background: 'rgba(220,252,231,.25)',
-                transition: 'border-color .2s',
               }}>
                 <span style={{ fontSize: '2.2rem' }}>🖼️</span>
                 <p style={{ color: '#15803d', fontWeight: 700, fontSize: '.9rem', textAlign: 'center' }}>
@@ -471,10 +514,7 @@ const Form = () => {
                   Mínimo 1 · Máximo {maxFotos} fotos
                 </p>
                 {files && files.length > 0 && (
-                  <div style={{
-                    background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
-                    borderRadius: 50, padding: '4px 16px', fontSize: '.8rem', fontWeight: 700, color: '#15803d',
-                  }}>
+                  <div style={{ background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)', borderRadius: 50, padding: '4px 16px', fontSize: '.8rem', fontWeight: 700, color: '#15803d' }}>
                     {files.length} foto{files.length > 1 ? 's' : ''} selecionada{files.length > 1 ? 's' : ''} ✓
                   </div>
                 )}
@@ -482,71 +522,71 @@ const Form = () => {
               <input id="fotos-input" type="file" name="fotos" accept="image/*" multiple
                 onChange={handleFileChange} style={{ display: 'none' }} />
               {fileError && <p style={{ color: '#ef4444', fontSize: '.78rem', marginTop: 8 }}>{fileError}</p>}
-            </div>
+            </SectionCard>
 
-            {/* Mural de recados */}
-            <div style={{
-              background: 'white', borderRadius: 20, padding: '28px 24px',
-              border: '1.5px solid #dcfce7', boxShadow: '0 4px 20px rgba(134,239,172,.12)',
-              marginBottom: 20,
-            }}>
+            {/* Mural */}
+            <SectionCard>
               <Field label="Mural de recados ✍️">
                 <textarea name="mural" value={formData.mural} onChange={handleChange}
                   placeholder="Escreva uma mensagem coletiva da turma, votos para o futuro, um grito de guerra... 💚"
                   rows={5}
-                  style={{ ...inputStyle, resize: 'vertical', minHeight: 120 } as React.CSSProperties}
-                />
+                  style={{ ...inputStyle, resize: 'vertical', minHeight: 120 } as React.CSSProperties} />
               </Field>
-            </div>
+            </SectionCard>
 
-            {/* Curiosidades — só premium */}
+            {/* Curiosidades — Premium */}
             {formData.plano === 'premium' && (
-              <div style={{
-                background: 'white', borderRadius: 20, padding: '28px 24px',
-                border: '1.5px solid #dcfce7', boxShadow: '0 4px 20px rgba(134,239,172,.12)',
-                marginBottom: 20,
-              }}>
+              <SectionCard premium>
                 <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 6 }}>
-                  Curiosidades da turma 🎲
+                  Curiosidades da turma 🎲 <PremiumBadge />
                 </p>
-                <p style={{ fontSize: '.82rem', color: '#4d7c5f', marginBottom: 20, lineHeight: 1.5 }}>
-                  Preencha os rankings — quem foi quem na turma.
+                <p style={{ fontSize: '.82rem', color: '#4d7c5f', marginBottom: 16, lineHeight: 1.5 }}>
+                  Quem foi quem na turma.
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {formData.curiosidades.map((c, i) => (
                     <div key={i}>
-                      <label style={{ fontSize: '.88rem', fontWeight: 700, color: '#15803d' }}>
-                        {c.categoria}
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Nome do aluno"
-                        value={c.resposta}
+                      <label style={{ fontSize: '.88rem', fontWeight: 700, color: '#15803d' }}>{c.categoria}</label>
+                      <input type="text" placeholder="Nome do aluno" value={c.resposta}
                         onChange={e => handleCuriosidadeChange(i, e.target.value)}
-                        style={{ ...inputStyle }}
-                      />
+                        style={inputStyle} />
                     </div>
                   ))}
                 </div>
-              </div>
+              </SectionCard>
             )}
 
-            {/* Música tema — só premium */}
+            {/* Música tema — Premium */}
             {formData.plano === 'premium' && (
-              <div style={{
-                background: 'white', borderRadius: 20, padding: '28px 24px',
-                border: '1.5px solid #dcfce7', boxShadow: '0 4px 20px rgba(134,239,172,.12)',
-                marginBottom: 20,
-              }}>
-                <Field label="Música tema 🎵">
+              <SectionCard premium>
+                <Field label="Música tema 🎵" hint="Toca automaticamente quando alguém abre a página.">
                   <input type="url" name="musicaUrl" value={formData.musicaUrl} onChange={handleChange}
-                    placeholder="Cole o link do YouTube da música da turma"
+                    placeholder="Cole o link do YouTube da música da turma" style={inputStyle} />
+                </Field>
+              </SectionCard>
+            )}
+
+
+            {/* Cápsula do tempo — Premium */}
+            {formData.plano === 'premium' && (
+              <SectionCard premium>
+                <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 6 }}>
+                  Cápsula do tempo ⏳ <PremiumBadge />
+                </p>
+                <p style={{ fontSize: '.82rem', color: '#4d7c5f', marginBottom: 16, lineHeight: 1.5 }}>
+                  Uma mensagem que só aparece na página a partir da data escolhida.
+                </p>
+                <Field label="Data de abertura 📅">
+                  <input type="date" name="capsulaData" value={formData.capsulaData} onChange={handleChange}
                     style={inputStyle} />
                 </Field>
-                <p style={{ fontSize: '.78rem', color: '#4d7c5f', marginTop: 4 }}>
-                  Toca automaticamente quando alguém abre a página.
-                </p>
-              </div>
+                <Field label="Mensagem da cápsula 💌">
+                  <textarea name="capsulaMensagem" value={formData.capsulaMensagem} onChange={handleChange}
+                    placeholder="Ex: Se você está lendo isso, já se passaram 5 anos... como estamos? 🥹"
+                    rows={4}
+                    style={{ ...inputStyle, resize: 'vertical', minHeight: 100 } as React.CSSProperties} />
+                </Field>
+              </SectionCard>
             )}
 
             {/* Resumo */}
@@ -561,29 +601,19 @@ const Form = () => {
                   {formData.nomeTurma || 'Sua turma'} · Plano {formData.plano === 'premium' ? 'Premium' : 'Básico'}
                 </p>
                 <p style={{ color: '#4d7c5f', fontSize: '.8rem' }}>
-                  {formData.plano === 'premium'
-                    ? '3 anos · 50 fotos · Música · Curiosidades · R$79'
-                    : '1 ano · 20 fotos · R$39'
-                  }
+                  {formData.plano === 'premium' ? '3 anos · 50 fotos · Música · Extras · R$79' : '1 ano · 20 fotos · R$39'}
                 </p>
               </div>
               <button type="button" onClick={() => setStep(1)}
-                style={{
-                  marginLeft: 'auto', background: 'none', border: 'none',
-                  color: '#4d7c5f', fontSize: '.78rem', cursor: 'pointer',
-                  fontFamily: "'Nunito',sans-serif",
-                }}>Alterar</button>
+                style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#4d7c5f', fontSize: '.78rem', cursor: 'pointer', fontFamily: "'Nunito',sans-serif" }}>
+                Alterar
+              </button>
             </div>
 
             {/* Botões */}
             <div style={{ display: 'flex', gap: 12 }}>
               <button type="button" onClick={() => setStep(1)}
-                style={{
-                  flex: '0 0 auto', padding: '14px 22px', borderRadius: 50,
-                  background: 'white', border: '1.5px solid #86efac',
-                  color: '#15803d', fontWeight: 700, fontSize: '.9rem',
-                  cursor: 'pointer', fontFamily: "'Nunito',sans-serif",
-                }}>
+                style={{ flex: '0 0 auto', padding: '14px 22px', borderRadius: 50, background: 'white', border: '1.5px solid #86efac', color: '#15803d', fontWeight: 700, fontSize: '.9rem', cursor: 'pointer', fontFamily: "'Nunito',sans-serif" }}>
                 ← Voltar
               </button>
               <button type="submit" className="btn-green" style={btnStyle} disabled={isSubmitting}>
@@ -604,30 +634,20 @@ const Form = () => {
       {/* ── FOOTER ── */}
       <footer style={{ background: '#052e16', padding: '36px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: 26, marginBottom: 8 }}>🎓</div>
-        <div className="pf" style={{
-          background: 'linear-gradient(90deg,#86efac,#2dd4bf)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          fontSize: '1.1rem', fontWeight: 700, marginBottom: 6,
-        }}>terceirON</div>
-        <p style={{ color: '#4d7c5f', fontSize: '.82rem', marginBottom: 16 }}>
-          A página da sua turma — para sempre.
-        </p>
+        <div className="pf" style={{ background: 'linear-gradient(90deg,#86efac,#2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '1.1rem', fontWeight: 700, marginBottom: 6 }}>
+          TerceirON
+        </div>
+        <p style={{ color: '#4d7c5f', fontSize: '.82rem', marginBottom: 16 }}>A página da sua turma — para sempre.</p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 14 }}>
           {[['Termos de uso', '/terms'], ['Privacidade', '/privacy']].map(([label, path]) => (
             <button key={path} onClick={() => router.push(path)}
-              style={{
-                background: 'none', border: 'none', color: '#4d7c5f',
-                fontSize: '.8rem', cursor: 'pointer', fontFamily: "'Nunito',sans-serif",
-                transition: 'color .2s',
-              }}
+              style={{ background: 'none', border: 'none', color: '#4d7c5f', fontSize: '.8rem', cursor: 'pointer', fontFamily: "'Nunito',sans-serif", transition: 'color .2s' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#86efac')}
               onMouseLeave={e => (e.currentTarget.style.color = '#4d7c5f')}
             >{label}</button>
           ))}
         </div>
-        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>
-          Copyright © 2025 terceirON · Todos os direitos reservados
-        </p>
+        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>Copyright © 2025 TerceirON · Todos os direitos reservados</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </footer>
     </div>

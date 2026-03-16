@@ -10,26 +10,36 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
 
     // ── Campos básicos ──
-    const plano        = formData.get('plano')        as string;
-    const nomeTurma    = formData.get('nomeTurma')    as string;
-    const escola       = formData.get('escola')       as string;
-    const cidade       = formData.get('cidade')       as string ?? '';
-    const dataFormatura = formData.get('dataFormatura') as string;
-    const email        = formData.get('email')        as string;
-    const mural        = formData.get('mural')        as string ?? '';
-    const fotos        = formData.getAll('fotos')     as File[];
+    const plano          = formData.get('plano')          as string;
+    const nomeTurma      = formData.get('nomeTurma')      as string;
+    const escola         = formData.get('escola')         as string;
+    const cidade         = formData.get('cidade')         as string ?? '';
+    const dataFormatura  = formData.get('dataFormatura')  as string;
+    const email          = formData.get('email')          as string;
+    const mural          = formData.get('mural')          as string ?? '';
+    const fotos          = formData.getAll('fotos')       as File[];
+
+    // ── Campos básico ──
+    const professorNome    = formData.get('professorNome')    as string ?? '';
+    const professorMateria = formData.get('professorMateria') as string ?? '';
+    const instagram        = formData.get('instagram')        as string ?? '';
 
     // ── Campos JSON ──
-    const alunosRaw      = formData.get('alunos')      as string;
+    const alunosRaw       = formData.get('alunos')       as string;
     const curiosidadesRaw = formData.get('curiosidades') as string | null;
-    const musicaUrl      = formData.get('musicaUrl')   as string ?? '';
+
+    // ── Campos premium ──
+    const musicaUrl       = formData.get('musicaUrl')       as string ?? '';
+    const capsulaData     = formData.get('capsulaData')     as string ?? '';
+    const capsulaMensagem = formData.get('capsulaMensagem') as string ?? '';
+    const tema            = formData.get('tema')            as string ?? 'verde';
 
     // ── Validação ──
     if (!nomeTurma || !escola || !dataFormatura || !email || !plano) {
       return NextResponse.json({ error: 'Campos obrigatórios ausentes.' }, { status: 400 });
     }
 
-    // ── Parse JSON ──
+    // ── Parse alunos ──
     let alunos = [];
     try {
       alunos = JSON.parse(alunosRaw || '[]');
@@ -37,26 +47,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Formato inválido para alunos.' }, { status: 400 });
     }
 
+    // ── Parse curiosidades ──
     let curiosidades = null;
     if (plano === 'premium' && curiosidadesRaw) {
-      try {
-        curiosidades = JSON.parse(curiosidadesRaw);
-      } catch {
-        curiosidades = null;
-      }
+      try { curiosidades = JSON.parse(curiosidadesRaw); }
+      catch { curiosidades = null; }
     }
 
-    // ── Gera slug a partir do nome da turma ──
+    // ── Gera slug ──
     const slug = `${nomeTurma.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9\s-]/g, '')
       .trim()
       .replace(/\s+/g, '-')}-${nanoid(8)}`;
 
-    // ── Upload das fotos para o Supabase Storage ──
+    // ── Upload das fotos ──
     const fotoUrls: string[] = [];
     for (const foto of fotos) {
-      const ext = foto.type.split('/')[1] || 'jpg';
+      const ext      = foto.type.split('/')[1] || 'jpg';
       const fileName = `${slug}/${nanoid(10)}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
@@ -90,9 +98,16 @@ export async function POST(req: NextRequest) {
       email,
       mural,
       alunos,
-      fotos: fotoUrls,
-      curiosidades: plano === 'premium' ? curiosidades : null,
-      musicaUrl:    plano === 'premium' ? musicaUrl    : null,
+      fotos:          fotoUrls,
+      professorNome,
+      professorMateria,
+      instagram,
+      // premium
+      curiosidades:     plano === 'premium' ? curiosidades : null,
+      musicaUrl:        plano === 'premium' ? musicaUrl        : null,
+      capsulaData:      plano === 'premium' ? capsulaData      : null,
+      capsulaMensagem:  plano === 'premium' ? capsulaMensagem  : null,
+      tema:             plano === 'premium' ? tema             : 'verde',
       status:    'pendente',
       createdAt: new Date().toISOString(),
     }]);
@@ -102,7 +117,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao salvar os dados.' }, { status: 500 });
     }
 
-    // ── Cria sessão Stripe ──
+    // ── Sessão Stripe ──
     const priceId = plano === 'basico'
       ? process.env.STRIPE_PRICE_ID    // R$39
       : process.env.STRIPE_PRICE_ID_2; // R$79
