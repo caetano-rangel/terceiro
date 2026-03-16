@@ -23,7 +23,6 @@ type FormData = {
   instagram: string;
   // Premium
   curiosidades: Curiosidade[];
-  musicaUrl: string;
   capsulaData: string;
   capsulaMensagem: string;
   tema: string;
@@ -33,12 +32,15 @@ type FieldErrors = Partial<Record<string, string>>;
 
 /* ── Temas disponíveis ── */
 const TEMAS = [
-  { id: 'verde',    nome: 'Verde Natureza', cor: '#22c55e', bg: '#f0fdf4' },
-  { id: 'roxo',     nome: 'Roxo Galáxia',  cor: '#8b5cf6', bg: '#f5f3ff' },
-  { id: 'rosa',     nome: 'Rosa Vibrante',  cor: '#ec4899', bg: '#fdf2f8' },
-  { id: 'azul',     nome: 'Azul Oceano',    cor: '#3b82f6', bg: '#eff6ff' },
-  { id: 'laranja',  nome: 'Laranja Sunset', cor: '#f97316', bg: '#fff7ed' },
-  { id: 'teal',     nome: 'Teal Moderno',   cor: '#14b8a6', bg: '#f0fdfa' },
+  { id: 'verde',    nome: 'Verde Natureza',  cor: '#22c55e', bg: '#f0fdf4' },
+  { id: 'roxo',     nome: 'Roxo Galáxia',   cor: '#8b5cf6', bg: '#f5f3ff' },
+  { id: 'rosa',     nome: 'Rosa Vibrante',   cor: '#ec4899', bg: '#fdf2f8' },
+  { id: 'azul',     nome: 'Azul Oceano',     cor: '#3b82f6', bg: '#eff6ff' },
+  { id: 'laranja',  nome: 'Laranja Sunset',  cor: '#f97316', bg: '#fff7ed' },
+  { id: 'vermelho', nome: 'Vermelho Paixão', cor: '#ef4444', bg: '#fff1f2' },
+  { id: 'preto',    nome: 'Preto Dark',      cor: '#6b7280', bg: '#f9fafb' },
+  { id: 'cafe',     nome: 'Café Vintage',    cor: '#b45309', bg: '#fffbeb' },
+  { id: 'dourado',  nome: 'Dourado Luxo',    cor: '#eab308', bg: '#fefce8' },
 ];
 
 /* ── Curiosidades padrão ── */
@@ -140,7 +142,6 @@ const Form = () => {
     professorNome: '', professorMateria: '',
     instagram: '',
     curiosidades: CURIOSIDADES_DEFAULT,
-    musicaUrl: '',
     capsulaData: '', capsulaMensagem: '',
     tema: 'verde',
   });
@@ -246,7 +247,6 @@ const Form = () => {
 
     if (formData.plano === 'premium') {
       payload.append('curiosidades',    JSON.stringify(formData.curiosidades));
-      payload.append('musicaUrl',       formData.musicaUrl);
       payload.append('capsulaData',     formData.capsulaData);
       payload.append('capsulaMensagem', formData.capsulaMensagem);
       payload.append('tema',            formData.tema);
@@ -366,7 +366,7 @@ const Form = () => {
                 >
                   {p === 'basico'
                     ? <>Básico · 20 fotos<br />1 ano · R$39</>
-                    : <>Premium · 50 fotos<br />Música + extras · R$79 ⭐</>
+                    : <>Premium · 50 fotos<br />Curiosidades + extras · R$79 ⭐</>
                   }
                 </button>
               ))}
@@ -556,16 +556,6 @@ const Form = () => {
               </SectionCard>
             )}
 
-            {/* Música tema — Premium */}
-            {formData.plano === 'premium' && (
-              <SectionCard premium>
-                <Field label="Música tema 🎵" hint="Toca automaticamente quando alguém abre a página.">
-                  <input type="url" name="musicaUrl" value={formData.musicaUrl} onChange={handleChange}
-                    placeholder="Cole o link do YouTube da música da turma" style={inputStyle} />
-                </Field>
-              </SectionCard>
-            )}
-
 
             {/* Cápsula do tempo — Premium */}
             {formData.plano === 'premium' && (
@@ -601,7 +591,7 @@ const Form = () => {
                   {formData.nomeTurma || 'Sua turma'} · Plano {formData.plano === 'premium' ? 'Premium' : 'Básico'}
                 </p>
                 <p style={{ color: '#4d7c5f', fontSize: '.8rem' }}>
-                  {formData.plano === 'premium' ? '3 anos · 50 fotos · Música · Extras · R$79' : '1 ano · 20 fotos · R$39'}
+                  {formData.plano === 'premium' ? '3 anos · 50 fotos · Curiosidades · Cápsula · Tema · R$79' : '1 ano · 20 fotos · R$39'}
                 </p>
               </div>
               <button type="button" onClick={() => setStep(1)}
@@ -647,7 +637,7 @@ const Form = () => {
             >{label}</button>
           ))}
         </div>
-        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>Copyright © 2025 TerceirON · Todos os direitos reservados</p>
+        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>Copyright © 2026 TerceirON · Todos os direitos reservados</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </footer>
     </div>

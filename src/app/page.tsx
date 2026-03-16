@@ -46,14 +46,12 @@ function PhoneMock() {
           justifyContent: 'center', fontSize: 26,
           boxShadow: '0 6px 18px rgba(134,239,172,.5)',
         }}>🎓</div>
-
         <div style={{ fontFamily: "'Playfair Display',serif", color: '#15803d', fontWeight: 700, fontSize: '1rem' }}>
           3º B — 2025
         </div>
         <div style={{ fontSize: '.6rem', color: '#4d7c5f', textAlign: 'center' }}>
           Colégio Est. Silva Jardim
         </div>
-
         <div style={{
           background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
           borderRadius: 14, padding: '8px 14px', textAlign: 'center',
@@ -65,7 +63,6 @@ function PhoneMock() {
           </div>
           <div style={{ fontSize: '.6rem', color: '#4d7c5f' }}>🎉</div>
         </div>
-
         {[
           { emoji: '🧑', nome: 'Lucas "Saladão"', frase: '"vou ser rico... ou não"' },
           { emoji: '👩', nome: 'Ana "Aninha"',    frase: '"medicina ou morrer"' },
@@ -86,14 +83,12 @@ function PhoneMock() {
             </div>
           </div>
         ))}
-
         <div style={{
           background: '#f0fdf4', borderRadius: 10, padding: '7px 10px', width: '100%',
           fontSize: '.62rem', color: '#4d7c5f', textAlign: 'center', fontStyle: 'italic',
         }}>
           &quot;A melhor turma de todas 💚&quot;
         </div>
-
         <div style={{ background: 'white', borderRadius: 10, padding: 6, border: '1px solid #dcfce7' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: 1.5 }}>
             {QR_PATTERN.map((v, i) => (
@@ -190,6 +185,7 @@ const Home: React.FC = () => {
         .pf { font-family: 'Playfair Display', Georgia, serif !important; }
         .btn-green:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(34,197,94,.55) !important; }
         .btn-teal:hover  { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(45,212,191,.55) !important; }
+        @media (max-width: 400px) { .btn-nav-text { display: none; } }
       `}</style>
 
       {/* ── NAV ── */}
@@ -197,19 +193,19 @@ const Home: React.FC = () => {
         background: 'rgba(246,253,248,0.95)', backdropFilter: 'blur(14px)',
         borderBottom: '1px solid #dcfce7',
         padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'sticky', top: 0, zIndex: 100,
+        position: 'sticky', top: 0, zIndex: 100, gap: 12,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span style={{ fontSize: 24 }}>🎓</span>
           <span className="pf" style={{
-            fontSize: '1.1rem', fontWeight: 700,
+            fontSize: '1.1rem', fontWeight: 700, whiteSpace: 'nowrap',
             background: 'linear-gradient(90deg,#15803d,#2dd4bf)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>TerceirON</span>
         </div>
         <button onClick={() => router.push('/form')} className="btn-green"
-          style={{ ...btnGreen, padding: '9px 16px', fontSize: '.78rem', whiteSpace: 'nowrap' }}>
-          Criar a página
+          style={{ ...btnGreen, padding: '9px 18px', fontSize: '.82rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          <span className="btn-nav-text">Criar a página da turma</span>
         </button>
       </nav>
 
@@ -223,26 +219,21 @@ const Home: React.FC = () => {
         <div style={{ position: 'absolute', top: '40%', left: '50%', width: 200, height: 200, background: 'radial-gradient(circle,rgba(190,242,100,.18),transparent 70%)', borderRadius: '50%', pointerEvents: 'none', transform: 'translate(-50%,-50%)' }} />
 
         <div style={{ maxWidth: 980, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 48, justifyContent: 'center', position: 'relative', zIndex: 1 }}>
-
           <motion.div variants={fadeLeft(0)} initial="hidden" animate="show" style={{ flex: '1 1 320px', maxWidth: 500 }}>
             <span style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
+              display: 'inline-block', background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
               borderRadius: 50, padding: '5px 18px',
               fontSize: '.82rem', color: '#15803d', fontWeight: 700, marginBottom: 18,
             }}>🎓 Exclusivo para o terceirão</span>
-
             <h1 className="pf" style={{ fontSize: 'clamp(2rem,5vw,3.1rem)', fontWeight: 700, lineHeight: 1.22, marginBottom: 18 }}>
               A Página{' '}
               <em style={{ color: '#15803d', fontStyle: 'italic' }}>Exclusiva</em>
               {' '}da Sua Turma
             </h1>
-
             <p style={{ fontSize: '1.05rem', color: '#4d7c5f', lineHeight: 1.75, marginBottom: 32 }}>
-              Crie uma página linda com perfis, fotos, countdown da formatura e mural de recados.
+              Crie uma página linda com fotos, countdown da formatura, mural de recados e muito mais.
               Um <strong style={{ color: '#15803d' }}>link único</strong> que fica vivo por anos.
             </p>
-
             <button onClick={() => router.push('/form')} className="btn-green"
               style={{ ...btnGreen, fontSize: '1.05rem', padding: '15px 32px' }}>
               Criar a página agora 🎓
@@ -293,12 +284,15 @@ const Home: React.FC = () => {
             <p style={{ color: '#4d7c5f', marginTop: 8, fontSize: '.95rem' }}>Uma página completa, bonita e permanente</p>
           </motion.div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 18 }}>
-            <FeatCard emoji="⏳" title="Countdown da formatura"  desc="Contador ao vivo com dias, horas, minutos e segundos até o grande dia."                    delay={0}   />
-            <FeatCard emoji="👥" title="Lista da turma"          desc="Nomes e apelidos de todos, com fotos coletivas da galera."                                   delay={0.1} />
-            <FeatCard emoji="🖼️" title="Galeria de fotos"        desc="Carrossel com as melhores fotos da galera. Até 20 no básico, 50 no premium."                delay={0.2} />
-            <FeatCard emoji="✍️" title="Mural de recados"        desc="Mensagens e votos para a turma ficarem eternizadas na página."                              delay={0}   />
-            <FeatCard emoji="🎲" title="Curiosidades da turma"   desc="MVP da bagunça, quem dormiu mais, quem colou de quem — os rankings." premium              delay={0.1} />
-            <FeatCard emoji="🎵" title="Música tema"             desc="A música que vai tocar quando alguém abrir a página da turma."        premium              delay={0.2} />
+            <FeatCard emoji="⏳" title="Countdown da formatura"  desc="Contador ao vivo com dias, horas, minutos e segundos até o grande dia."                         delay={0}   />
+            <FeatCard emoji="👥" title="Lista da turma"          desc="Nomes e apelidos de todos com fotos coletivas da galera."                                        delay={0.1} />
+            <FeatCard emoji="🖼️" title="Galeria de fotos"        desc="Carrossel estilo Netflix com as melhores fotos. Até 20 no básico, 50 no premium."                delay={0.2} />
+            <FeatCard emoji="✍️" title="Mural de recados"        desc="Mensagem coletiva da turma eternizada na página."                                               delay={0}   />
+            <FeatCard emoji="🍎" title="Professor favorito"      desc="Homenagem ao professor mais querido com nome e matéria."                                        delay={0.1} />
+            <FeatCard emoji="📸" title="Instagram da turma"      desc="Link direto para o perfil do Instagram da turma."                                               delay={0.2} />
+            <FeatCard emoji="🎲" title="Curiosidades da turma"   desc="MVP da bagunça, quem dormiu mais, quem colou de quem — os rankings." premium                  delay={0}   />
+            <FeatCard emoji="🎨" title="Tema de cores"           desc="9 paletas para personalizar toda a identidade visual da página." premium                       delay={0.1} />
+            <FeatCard emoji="⏳" title="Cápsula do tempo"        desc="Mensagem que só aparece na data que a turma escolher. Surpresa garantida." premium             delay={0.2} />
           </div>
         </div>
       </section>
@@ -338,9 +332,11 @@ const Home: React.FC = () => {
                     [true,  'Até 20 fotos coletivas'],
                     [true,  'Countdown da formatura'],
                     [true,  'Lista + mural + galeria'],
+                    [true,  'Professor favorito + Instagram'],
                     [true,  'QR Code exclusivo'],
                     [false, 'Sem curiosidades'],
-                    [false, 'Sem música tema'],
+                    [false, 'Sem tema de cores'],
+                    [false, 'Sem cápsula do tempo'],
                   ] as [boolean, string][]).map(([ok, label]) => (
                     <li key={label} style={{ fontSize: '.93rem', display: 'flex', alignItems: 'center', gap: 6, color: ok ? '#374151' : '#9ca3af' }}>
                       <span style={{ color: ok ? '#4ade80' : '#f87171' }}>{ok ? '✓' : '✕'}</span> {label}
@@ -387,9 +383,11 @@ const Home: React.FC = () => {
                     'Até 50 fotos coletivas',
                     'Countdown da formatura',
                     'Lista + mural + galeria',
+                    'Professor favorito + Instagram',
                     'QR Code exclusivo',
                     'Curiosidades da turma 🎲',
-                    'Música tema 🎵',
+                    'Tema de cores 🎨',
+                    'Cápsula do tempo ⏳',
                   ].map((f) => (
                     <li key={f} style={{ fontSize: '.93rem', display: 'flex', alignItems: 'center', gap: 6, color: '#374151' }}>
                       <span style={{ color: '#4ade80' }}>✓</span> {f}
@@ -437,10 +435,8 @@ const Home: React.FC = () => {
       <footer style={{ background: '#052e16', padding: '44px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: 30, marginBottom: 10 }}>🎓</div>
         <div className="pf" style={{
-          fontSize: '1.25rem', fontWeight: 700, marginBottom: 8,
-          background: 'linear-gradient(90deg,#86efac,#2dd4bf)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-block',
-        }}>terceirON</div>
+          fontSize: '1.25rem', fontWeight: 700, marginBottom: 8, color: '#86efac',
+        }}>TerceirON</div>
         <p style={{ color: '#4d7c5f', fontSize: '.88rem', marginBottom: 20 }}>
           A página da sua turma — para sempre.
         </p>
@@ -458,7 +454,7 @@ const Home: React.FC = () => {
           ))}
         </div>
         <p style={{ color: '#1a4a28', fontSize: '.75rem' }}>
-          Copyright © 2026 terceirON · Todos os direitos reservados
+          Copyright © 2026 TerceirON · Todos os direitos reservados
         </p>
       </footer>
     </div>

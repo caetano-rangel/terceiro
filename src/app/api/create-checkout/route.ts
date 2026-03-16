@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
     const curiosidadesRaw = formData.get('curiosidades') as string | null;
 
     // ── Campos premium ──
-    const musicaUrl       = formData.get('musicaUrl')       as string ?? '';
     const capsulaData     = formData.get('capsulaData')     as string ?? '';
     const capsulaMensagem = formData.get('capsulaMensagem') as string ?? '';
     const tema            = formData.get('tema')            as string ?? 'verde';
@@ -104,7 +103,6 @@ export async function POST(req: NextRequest) {
       instagram,
       // premium
       curiosidades:     plano === 'premium' ? curiosidades : null,
-      musicaUrl:        plano === 'premium' ? musicaUrl        : null,
       capsulaData:      plano === 'premium' ? capsulaData      : null,
       capsulaMensagem:  plano === 'premium' ? capsulaMensagem  : null,
       tema:             plano === 'premium' ? tema             : 'verde',

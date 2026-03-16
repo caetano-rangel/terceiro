@@ -28,7 +28,6 @@ interface TurmaData {
   instagram: string | null;
   // premium
   curiosidades: Curiosidade[] | null;
-  musicaUrl: string | null;
   capsulaData: string | null;
   capsulaMensagem: string | null;
   tema: string | null;
@@ -64,12 +63,15 @@ function calcCountdown(dataFormatura: string): Countdown {
 
 /* ── Temas ── */
 const TEMAS: Record<string, { cor: string; gradient: string; light: string; badge: string; dark: string; heroBg: string }> = {
-  verde:   { cor: '#15803d', gradient: 'linear-gradient(135deg,#86efac,#22c55e,#15803d)', light: '#dcfce7', badge: '#15803d', dark: '#052e16', heroBg: 'linear-gradient(155deg,#052e16 0%,#064e3b 50%,#0d4d4d 100%)' },
-  roxo:    { cor: '#7c3aed', gradient: 'linear-gradient(135deg,#c4b5fd,#8b5cf6,#7c3aed)', light: '#ede9fe', badge: '#7c3aed', dark: '#2e1065', heroBg: 'linear-gradient(155deg,#2e1065 0%,#4c1d95 50%,#3b0764 100%)' },
-  rosa:    { cor: '#db2777', gradient: 'linear-gradient(135deg,#f9a8d4,#ec4899,#db2777)', light: '#fce7f3', badge: '#db2777', dark: '#831843', heroBg: 'linear-gradient(155deg,#831843 0%,#9d174d 50%,#701a75 100%)' },
-  azul:    { cor: '#1d4ed8', gradient: 'linear-gradient(135deg,#93c5fd,#3b82f6,#1d4ed8)', light: '#dbeafe', badge: '#1d4ed8', dark: '#1e3a8a', heroBg: 'linear-gradient(155deg,#1e3a8a 0%,#1e40af 50%,#172554 100%)' },
-  laranja: { cor: '#c2410c', gradient: 'linear-gradient(135deg,#fdba74,#f97316,#c2410c)', light: '#ffedd5', badge: '#c2410c', dark: '#431407', heroBg: 'linear-gradient(155deg,#431407 0%,#7c2d12 50%,#450a0a 100%)' },
-  teal:    { cor: '#0f766e', gradient: 'linear-gradient(135deg,#5eead4,#14b8a6,#0f766e)', light: '#ccfbf1', badge: '#0f766e', dark: '#042f2e', heroBg: 'linear-gradient(155deg,#042f2e 0%,#134e4a 50%,#022c22 100%)' },
+  verde:    { cor: '#15803d', gradient: 'linear-gradient(135deg,#86efac,#22c55e,#15803d)', light: '#dcfce7', badge: '#15803d', dark: '#052e16', heroBg: 'linear-gradient(155deg,#052e16 0%,#064e3b 50%,#0d4d4d 100%)' },
+  roxo:     { cor: '#7c3aed', gradient: 'linear-gradient(135deg,#c4b5fd,#8b5cf6,#7c3aed)', light: '#ede9fe', badge: '#7c3aed', dark: '#2e1065', heroBg: 'linear-gradient(155deg,#2e1065 0%,#4c1d95 50%,#3b0764 100%)' },
+  rosa:     { cor: '#db2777', gradient: 'linear-gradient(135deg,#f9a8d4,#ec4899,#db2777)', light: '#fce7f3', badge: '#db2777', dark: '#831843', heroBg: 'linear-gradient(155deg,#831843 0%,#9d174d 50%,#701a75 100%)' },
+  azul:     { cor: '#1d4ed8', gradient: 'linear-gradient(135deg,#93c5fd,#3b82f6,#1d4ed8)', light: '#dbeafe', badge: '#1d4ed8', dark: '#1e3a8a', heroBg: 'linear-gradient(155deg,#1e3a8a 0%,#1e40af 50%,#172554 100%)' },
+  laranja:  { cor: '#c2410c', gradient: 'linear-gradient(135deg,#fdba74,#f97316,#c2410c)', light: '#ffedd5', badge: '#c2410c', dark: '#431407', heroBg: 'linear-gradient(155deg,#431407 0%,#7c2d12 50%,#450a0a 100%)' },
+  vermelho: { cor: '#b91c1c', gradient: 'linear-gradient(135deg,#fca5a5,#ef4444,#b91c1c)', light: '#fee2e2', badge: '#b91c1c', dark: '#450a0a', heroBg: 'linear-gradient(155deg,#450a0a 0%,#7f1d1d 50%,#3b0000 100%)' },
+  preto:    { cor: '#374151', gradient: 'linear-gradient(135deg,#9ca3af,#6b7280,#374151)', light: '#f3f4f6', badge: '#374151', dark: '#030712', heroBg: 'linear-gradient(155deg,#030712 0%,#111827 50%,#0f172a 100%)' },
+  cafe:     { cor: '#92400e', gradient: 'linear-gradient(135deg,#d97706,#b45309,#92400e)', light: '#fef3c7', badge: '#92400e', dark: '#1c0a00', heroBg: 'linear-gradient(155deg,#1c0a00 0%,#451a03 50%,#2c1200 100%)' },
+  dourado:  { cor: '#a16207', gradient: 'linear-gradient(135deg,#fde68a,#eab308,#a16207)', light: '#fefce8', badge: '#a16207', dark: '#1a1000', heroBg: 'linear-gradient(155deg,#1a1000 0%,#422006 50%,#1c1300 100%)' },
 };
 
 /* ── Galeria carrossel centralizado ── */
@@ -324,18 +326,6 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
     return () => clearInterval(id);
   }, [turma]);
 
-  /* ── Música tema (premium) ── */
-  useEffect(() => {
-    if (!turma || turma.plano !== 'premium' || !turma.musicaUrl) return;
-    const handler = () => {
-      const audio = document.getElementById('bg-audio') as HTMLAudioElement;
-      if (audio) { audio.volume = 0.2; audio.play().catch(() => {}); }
-      document.removeEventListener('click', handler);
-    };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, [turma]);
-
   /* ── Download QR ── */
   const downloadQR = useCallback(() => {
     if (!qrCodeUrl || !slug) return;
@@ -363,12 +353,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
   return (
     <div style={{ fontFamily: "'Nunito',sans-serif", minHeight: '100vh', background: '#f6fdf8', color: '#052e16', overflowX: 'hidden' }}>
 
-      {/* Música tema */}
-      {turma.plano === 'premium' && turma.musicaUrl && (
-        <audio id="bg-audio" loop>
-          <source src={turma.musicaUrl} type="audio/mp3" />
-        </audio>
-      )}
+
 
       {/* ── HERO ── */}
       <div style={{ position: 'relative', overflow: 'hidden', padding: '64px 24px 48px', textAlign: 'center', background: tema.heroBg, borderBottom: `1px solid ${tema.cor}20` }}>
@@ -386,11 +371,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
           <span style={{ display: 'inline-block', background: 'rgba(255,255,255,.12)', borderRadius: 50, padding: '4px 16px', fontSize: '.75rem', fontWeight: 700, color: 'white', border: '1px solid rgba(255,255,255,.2)' }}>
             🎉 Formatura em {formatarData(turma.dataFormatura)}
           </span>
-          {turma.plano === 'premium' && turma.musicaUrl && (
-            <span style={{ display: 'inline-block', background: 'rgba(255,255,255,.12)', borderRadius: 50, padding: '4px 16px', fontSize: '.75rem', fontWeight: 700, color: 'white', border: '1px solid rgba(255,255,255,.2)' }}>
-              🎵 Toque para ouvir
-            </span>
-          )}
+
         </div>
       </div>
 
@@ -503,6 +484,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
             </div>
           </div>
         )}
+
 
         {/* ── CURIOSIDADES (premium) ── */}
         {turma.plano === 'premium' && turma.curiosidades && turma.curiosidades.length > 0 && (
@@ -669,7 +651,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
           fontWeight: 700, marginBottom: 4,
         }}>TerceirON</p>
         <p style={{ color: tema.light, fontSize: '.72rem', opacity: 0.6 }}>
-          Copyright © 2025 TerceirON · Todos os direitos reservados
+          Copyright © 2026 TerceirON · Todos os direitos reservados
         </p>
       </footer>
     </div>
