@@ -292,6 +292,14 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<Countdown | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  // Edição de fotos
+  const [editMode, setEditMode]     = useState(false);
+  const [authModal, setAuthModal]   = useState(false);
+  const [authEmail, setAuthEmail]   = useState('');
+  const [authError, setAuthError]   = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [fotosEdit, setFotosEdit]   = useState<string[]>([]);
 
   /* ── Carrega dados ── */
   useEffect(() => {
@@ -307,6 +315,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
       if (error || !data) { console.error('Erro:', error); return; }
       setTurma(data as TurmaData);
+      setFotosEdit((data as TurmaData).fotos || []);
 
       const qr = await QRCode.toDataURL(
         `${process.env.NEXT_PUBLIC_BASE_URL}/${s}`,
@@ -335,6 +344,78 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
     a.click();
   }, [qrCodeUrl, slug]);
 
+  /* ── Auth edição ── */
+  const handleAuth = async () => {
+    if (!authEmail.trim()) { setAuthError('Digite seu email.'); return; }
+    setAuthLoading(true); setAuthError('');
+    try {
+      const fd = new FormData();
+      fd.append('slug',   slug!);
+      fd.append('email',  authEmail);
+      fd.append('action', 'remove');
+      fd.append('fotoUrl', fotosEdit[0] || '');
+      // Só valida o email — não remove nada de verdade
+      const res  = await fetch('/api/edit-photos', { method: 'POST', body: (() => { const f = new FormData(); f.append('slug', slug!); f.append('email', authEmail); f.append('action', 'validate'); return f; })() });
+      const data = await res.json();
+      if (res.status === 401) { setAuthError('Email incorreto. Tente novamente.'); return; }
+      if (res.status === 404) { setAuthError('Página não encontrada.'); return; }
+      // Qualquer outro status que não 400 de ação inválida = email correto
+      setAuthModal(false);
+      setEditMode(true);
+    } catch {
+      setAuthError('Erro de conexão.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRemoveFoto = async (url: string) => {
+    if (!slug || editLoading) return;
+    if (!confirm('Remover esta foto?')) return;
+    setEditLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('slug',    slug);
+      fd.append('email',   authEmail);
+      fd.append('action',  'remove');
+      fd.append('fotoUrl', url);
+      const res  = await fetch('/api/edit-photos', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok) {
+        setFotosEdit(data.fotos);
+        if (turma) setTurma({ ...turma, fotos: data.fotos });
+      } else {
+        alert(data.error || 'Erro ao remover foto.');
+      }
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleAddFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !slug || editLoading) return;
+    setEditLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('slug',   slug);
+      fd.append('email',  authEmail);
+      fd.append('action', 'add');
+      fd.append('foto',   file);
+      const res  = await fetch('/api/edit-photos', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok) {
+        setFotosEdit(data.fotos);
+        if (turma) setTurma({ ...turma, fotos: data.fotos });
+      } else {
+        alert(data.error || 'Erro ao adicionar foto.');
+      }
+    } finally {
+      setEditLoading(false);
+      e.target.value = '';
+    }
+  };
+
   /* ── Loading ── */
   if (!turma) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0fdf4', fontFamily: "'Nunito',sans-serif" }}>
@@ -355,6 +436,52 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
 
 
+      {/* ── MODAL AUTH ── */}
+      {authModal && (
+        <div onClick={() => setAuthModal(false)} style={{
+          position: 'fixed', inset: 0, zIndex: 999,
+          background: 'rgba(0,0,0,.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'white', borderRadius: 24, padding: '40px 32px',
+            maxWidth: 400, width: '100%',
+            boxShadow: '0 24px 80px rgba(0,0,0,.2)',
+          }}>
+            <h2 className="pf" style={{ fontSize: '1.4rem', color: '#052e16', marginBottom: 8 }}>
+              Gerenciar fotos
+            </h2>
+            <p style={{ fontSize: '.88rem', color: '#4d7c5f', marginBottom: 24, lineHeight: 1.5 }}>
+              Digite o email usado na criação da página para entrar no modo de edição.
+            </p>
+            <input
+              type="email"
+              value={authEmail}
+              onChange={e => { setAuthEmail(e.target.value); setAuthError(''); }}
+              placeholder="seu@email.com"
+              onKeyDown={e => e.key === 'Enter' && handleAuth()}
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: 14,
+                border: `1.5px solid ${authError ? '#f87171' : '#dcfce7'}`,
+                fontSize: '.97rem', fontFamily: "'Nunito',sans-serif",
+                outline: 'none', marginBottom: 8, boxSizing: 'border-box',
+              }}
+            />
+            {authError && <p style={{ color: '#ef4444', fontSize: '.78rem', marginBottom: 8 }}>{authError}</p>}
+            <button onClick={handleAuth} disabled={authLoading}
+              style={{
+                width: '100%', padding: '13px', borderRadius: 50, border: 'none',
+                background: `linear-gradient(135deg,${tema.light},${tema.cor})`,
+                color: 'white', fontWeight: 700, fontSize: '1rem',
+                cursor: authLoading ? 'wait' : 'pointer',
+                fontFamily: "'Nunito',sans-serif", marginTop: 4,
+              }}>
+              {authLoading ? 'Verificando...' : 'Entrar no modo de edição'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── HERO ── */}
       <div style={{ position: 'relative', overflow: 'hidden', padding: '64px 24px 48px', textAlign: 'center', background: tema.heroBg, borderBottom: `1px solid ${tema.cor}20` }}>
         <div style={{ position: 'absolute', top: -60, right: -60, width: 260, height: 260, background: 'radial-gradient(circle,rgba(134,239,172,.15),transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -374,6 +501,8 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
         </div>
       </div>
+
+
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 20px 80px' }}>
 
@@ -426,9 +555,75 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
         )}
 
         {/* ── GALERIA DE FOTOS ── */}
-        {turma.fotos.length > 0 && (
-          <GaleriaCarrossel fotos={turma.fotos} tema={tema} />
+        {editMode ? (
+          <div style={{ marginBottom: 56 }}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <span style={{ display: 'inline-block', background: `linear-gradient(135deg,${tema.light},${tema.light}88)`, borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: tema.cor, fontWeight: 700 }}>
+                ✏️ Editando galeria — clique no ✕ para remover
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 8 }}>
+              {fotosEdit.map((url, i) => (
+                <div key={i} style={{ position: 'relative', borderRadius: 12, overflow: 'hidden' }}>
+                  <img src={url} alt={`Foto ${i+1}`} style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }} />
+                  <button onClick={() => handleRemoveFoto(url)}
+                    style={{
+                      position: 'absolute', top: 6, right: 6,
+                      background: 'rgba(0,0,0,.65)', border: 'none', color: 'white',
+                      borderRadius: '50%', width: 28, height: 28, cursor: 'pointer',
+                      fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: "'Nunito',sans-serif",
+                    }}>✕</button>
+                </div>
+              ))}
+              {fotosEdit.length < (turma?.plano === 'premium' ? 50 : 20) && (
+                <label style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  height: 120, borderRadius: 12, cursor: 'pointer',
+                  border: `2px dashed ${tema.light}`, background: `${tema.light}40`,
+                  color: tema.cor, fontSize: '.8rem', fontWeight: 700, gap: 6,
+                }}>
+                  <span style={{ fontSize: 24 }}>+</span>
+                  Adicionar
+                  <input type="file" accept="image/*" onChange={handleAddFoto} style={{ display: 'none' }} />
+                </label>
+              )}
+            </div>
+          </div>
+        ) : (
+          turma.fotos.length > 0 && <GaleriaCarrossel fotos={turma.fotos} tema={tema} />
         )}
+
+        {/* Botão gerenciar fotos / sair edição */}
+        <div style={{ textAlign: 'center', marginTop: -36, marginBottom: 56 }}>
+          {editMode ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '.82rem', color: '#4d7c5f', fontWeight: 600 }}>
+                ✏️ {fotosEdit.length}/{turma?.plano === 'premium' ? 50 : 20} fotos
+                {editLoading && ' · Salvando...'}
+              </span>
+              <button onClick={() => setEditMode(false)}
+                style={{
+                  background: `linear-gradient(135deg,${tema.light},${tema.cor}40)`,
+                  border: `1px solid ${tema.light}`,
+                  color: tema.cor, borderRadius: 50, padding: '7px 18px',
+                  fontSize: '.82rem', fontWeight: 700, cursor: 'pointer',
+                  fontFamily: "'Nunito',sans-serif",
+                }}>
+                ✓ Sair da edição
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setAuthModal(true)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '.75rem', color: '#4d7c5f', fontFamily: "'Nunito',sans-serif",
+                opacity: .5, textDecoration: 'none',
+              }}>
+              🔒 Gerenciar fotos
+            </button>
+          )}
+        </div>
 
         {/* ── LISTA DA TURMA ── */}
         {turma.alunos.length > 0 && (

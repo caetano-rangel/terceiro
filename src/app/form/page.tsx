@@ -47,7 +47,7 @@ const TEMAS = [
 const CURIOSIDADES_DEFAULT: Curiosidade[] = [
   { categoria: '😴 Quem dormiu mais na aula', resposta: '' },
   { categoria: '📋 MVP da bagunça',           resposta: '' },
-  { categoria: '🤫 Quem colou de quem',       resposta: '' },
+  { categoria: '🤫 Quem mais colou',       resposta: '' },
   { categoria: '📱 Viciado no celular',       resposta: '' },
   { categoria: '🍕 Quem mais comia na aula',  resposta: '' },
   { categoria: '🏆 O mais inteligente',       resposta: '' },
