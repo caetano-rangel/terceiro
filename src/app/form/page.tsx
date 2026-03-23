@@ -32,22 +32,22 @@ type FieldErrors = Partial<Record<string, string>>;
 
 /* ── Temas disponíveis ── */
 const TEMAS = [
-  { id: 'verde',    nome: 'Verde Natureza',  cor: '#22c55e', bg: '#f0fdf4' },
-  { id: 'roxo',     nome: 'Roxo Galáxia',   cor: '#8b5cf6', bg: '#f5f3ff' },
-  { id: 'rosa',     nome: 'Rosa Vibrante',   cor: '#ec4899', bg: '#fdf2f8' },
-  { id: 'azul',     nome: 'Azul Oceano',     cor: '#3b82f6', bg: '#eff6ff' },
-  { id: 'laranja',  nome: 'Laranja Sunset',  cor: '#f97316', bg: '#fff7ed' },
-  { id: 'vermelho', nome: 'Vermelho Paixão', cor: '#ef4444', bg: '#fff1f2' },
-  { id: 'preto',    nome: 'Preto Dark',      cor: '#6b7280', bg: '#f9fafb' },
-  { id: 'cafe',     nome: 'Café Vintage',    cor: '#b45309', bg: '#fffbeb' },
-  { id: 'dourado',  nome: 'Dourado Luxo',    cor: '#eab308', bg: '#fefce8' },
+  { id: 'verde',    nome: 'Verde Esmeralda', cor: '#86efac', text: '#d1fae5', cardBg: 'linear-gradient(160deg,#064e3b 0%,#065f46 40%,#047857 60%,#064e3b 100%)', border: 'rgba(110,231,183,.5)' },
+  { id: 'roxo',     nome: 'Roxo Ametista',   cor: '#a78bfa', text: '#ede9fe', cardBg: 'linear-gradient(160deg,#2e1065 0%,#3b0764 40%,#4c1d95 60%,#2e1065 100%)', border: 'rgba(167,139,250,.5)' },
+  { id: 'rosa',     nome: 'Rosa Rubi',       cor: '#f9a8d4', text: '#fce7f3', cardBg: 'linear-gradient(160deg,#831843 0%,#9d174d 40%,#be185d 60%,#831843 100%)', border: 'rgba(249,168,212,.5)' },
+  { id: 'azul',     nome: 'Azul Safira',     cor: '#93c5fd', text: '#dbeafe', cardBg: 'linear-gradient(160deg,#1e3a8a 0%,#1e40af 40%,#2563eb 60%,#1e3a8a 100%)', border: 'rgba(147,197,253,.5)' },
+  { id: 'laranja',  nome: 'Laranja Bronze',  cor: '#fdba74', text: '#ffedd5', cardBg: 'linear-gradient(160deg,#431407 0%,#7c2d12 40%,#9a3412 60%,#431407 100%)', border: 'rgba(253,186,116,.5)' },
+  { id: 'vermelho', nome: 'Vermelho Rubi',   cor: '#fca5a5', text: '#fee2e2', cardBg: 'linear-gradient(160deg,#450a0a 0%,#7f1d1d 40%,#991b1b 60%,#450a0a 100%)', border: 'rgba(252,165,165,.5)' },
+  { id: 'preto',    nome: 'Preto Titânio',   cor: '#9ca3af', text: '#f3f4f6', cardBg: 'linear-gradient(160deg,#030712 0%,#111827 40%,#1f2937 60%,#030712 100%)', border: 'rgba(156,163,175,.4)' },
+  { id: 'cafe',     nome: 'Café Mogno',      cor: '#fcd34d', text: '#fef3c7', cardBg: 'linear-gradient(160deg,#1c0a00 0%,#451a03 40%,#78350f 60%,#1c0a00 100%)', border: 'rgba(252,211,77,.4)' },
+  { id: 'dourado',  nome: 'Dourado Luxo',    cor: '#fde68a', text: '#fefce8', cardBg: 'linear-gradient(160deg,#7b5900 0%,#b8860b 20%,#d4a017 40%,#9a7010 60%,#7b5900 100%)', border: 'rgba(253,230,138,.5)' },
 ];
 
 /* ── Curiosidades padrão ── */
 const CURIOSIDADES_DEFAULT: Curiosidade[] = [
   { categoria: '😴 Quem dormiu mais na aula', resposta: '' },
   { categoria: '📋 MVP da bagunça',           resposta: '' },
-  { categoria: '🤫 Quem mais colou',       resposta: '' },
+  { categoria: '🤫 Quem colou de quem',       resposta: '' },
   { categoria: '📱 Viciado no celular',       resposta: '' },
   { categoria: '🍕 Quem mais comia na aula',  resposta: '' },
   { categoria: '🏆 O mais inteligente',       resposta: '' },
@@ -355,13 +355,20 @@ const Form = () => {
                 <button key={p} type="button"
                   onClick={() => setFormData(d => ({ ...d, plano: p }))}
                   style={{
-                    flex: 1, padding: '12px 8px', borderRadius: 14, border: 'none',
+                    flex: 1, padding: '12px 8px', borderRadius: 14,
                     cursor: 'pointer', fontFamily: "'Nunito',sans-serif",
                     fontWeight: 700, fontSize: '.82rem', lineHeight: 1.4,
                     transition: 'all .25s',
-                    background: formData.plano === p ? 'linear-gradient(135deg,#86efac,#22c55e,#15803d)' : 'transparent',
-                    color: formData.plano === p ? 'white' : '#4d7c5f',
-                    boxShadow: formData.plano === p ? '0 4px 14px rgba(34,197,94,.3)' : 'none',
+                    background: p === 'basico'
+                      ? (formData.plano === p ? 'linear-gradient(135deg,#86efac,#22c55e,#15803d)' : 'transparent')
+                      : (formData.plano === p ? 'linear-gradient(160deg,#052e16 0%,#064e3b 30%,#065f46 55%,#052e16 100%)' : 'transparent'),
+                    color: formData.plano === p
+                      ? (p === 'premium' ? '#86efac' : 'white')
+                      : '#4d7c5f',
+                    boxShadow: formData.plano === p
+                      ? (p === 'premium' ? '0 4px 14px rgba(5,46,22,.5), inset 0 1px 0 rgba(134,239,172,.15)' : '0 4px 14px rgba(34,197,94,.3)')
+                      : 'none',
+                    border: formData.plano === p && p === 'premium' ? '1px solid rgba(134,239,172,.3)' : 'none',
                   }}
                 >
                   {p === 'basico'
@@ -471,15 +478,21 @@ const Form = () => {
                     <button key={t.id} type="button"
                       onClick={() => setFormData(p => ({ ...p, tema: t.id }))}
                       style={{
-                        padding: '12px 8px', borderRadius: 14, border: 'none', cursor: 'pointer',
-                        background: formData.tema === t.id ? t.bg : 'white',
-                        outline: formData.tema === t.id ? `2px solid ${t.cor}` : '2px solid #dcfce7',
+                        padding: '14px 8px', borderRadius: 14, border: 'none', cursor: 'pointer',
+                        background: t.cardBg,
+                        outline: formData.tema === t.id ? `2.5px solid ${t.cor}` : `1.5px solid ${t.border}`,
                         transition: 'all .2s', fontFamily: "'Nunito',sans-serif",
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                        boxShadow: formData.tema === t.id ? `0 4px 18px rgba(0,0,0,.35)` : '0 2px 8px rgba(0,0,0,.2)',
+                        transform: formData.tema === t.id ? 'scale(1.04)' : 'scale(1)',
+                        position: 'relative', overflow: 'hidden',
                       }}
                     >
-                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: t.cor }} />
-                      <span style={{ fontSize: '.72rem', fontWeight: 700, color: '#052e16', textAlign: 'center', lineHeight: 1.3 }}>{t.nome}</span>
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: t.cor, boxShadow: `0 2px 8px rgba(0,0,0,.3)` }} />
+                      <span style={{ fontSize: '.68rem', fontWeight: 700, color: t.text, textAlign: 'center', lineHeight: 1.3 }}>{t.nome}</span>
+                      {formData.tema === t.id && (
+                        <div style={{ position: 'absolute', top: 6, right: 6, width: 14, height: 14, borderRadius: '50%', background: t.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: '#000' }}>✓</div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -637,7 +650,7 @@ const Form = () => {
             >{label}</button>
           ))}
         </div>
-        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>Copyright © 2026 TerceirON · Todos os direitos reservados</p>
+        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>Copyright © 2025 TerceirON · Todos os direitos reservados</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </footer>
     </div>
