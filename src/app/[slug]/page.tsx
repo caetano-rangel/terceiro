@@ -774,7 +774,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
 
         {/* ── CURIOSIDADES (premium) ── */}
-        {turma.plano === 'premium' && turma.curiosidades && turma.curiosidades.length > 0 && (
+        {turma.plano === 'premium' && turma.curiosidades && turma.curiosidades.some(c => c.resposta) && (
           <div style={{ marginBottom: 56 }}>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <span style={{ display: 'inline-block', background: `linear-gradient(135deg,${tema.light},${tema.light}88)`, borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: tema.cor, fontWeight: 700 }}>
