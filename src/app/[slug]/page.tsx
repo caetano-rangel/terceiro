@@ -533,9 +533,10 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
           <div onClick={e => e.stopPropagation()} style={{
+            background: '#ffffff',
             borderRadius: 24, padding: '40px 32px',
             maxWidth: 400, width: '100%',
-            boxShadow: '0 24px 80px rgba(0,0,0,.2)',
+            boxShadow: '0 24px 80px rgba(0,0,0,.5)',
           }}>
             <h2 className="pf" style={{ fontSize: '1.4rem', color: '#052e16', marginBottom: 8 }}>
               Gerenciar fotos
@@ -552,6 +553,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: 14,
                 border: `1.5px solid ${authError ? '#f87171' : '#dcfce7'}`,
+                background: '#f9fafb', color: '#052e16',
                 fontSize: '.97rem', fontFamily: "'Nunito',sans-serif",
                 outline: 'none', marginBottom: 8, boxSizing: 'border-box',
               }}
@@ -560,10 +562,11 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
             <button onClick={handleAuth} disabled={authLoading}
               style={{
                 width: '100%', padding: '13px', borderRadius: 50, border: 'none',
-                background: `linear-gradient(135deg,${tema.light},${tema.cor})`,
-                color: 'white', fontWeight: 700, fontSize: '1rem',
+                background: tema.cardBg,
+                color: tema.cardText, fontWeight: 700, fontSize: '1rem',
                 cursor: authLoading ? 'wait' : 'pointer',
                 fontFamily: "'Nunito',sans-serif", marginTop: 4,
+                boxShadow: `0 4px 16px ${tema.cardShadow}`,
               }}>
               {authLoading ? 'Verificando...' : 'Entrar no modo de edição'}
             </button>
