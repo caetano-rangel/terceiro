@@ -316,7 +316,7 @@ const Home: React.FC = () => {
             <motion.div
               variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={{ once: true }}
               whileHover={{ y: -6, transition: { duration: 0.3 } }}
-              style={{ flex: '1 1 280px', maxWidth: 340 }}
+              style={{ flex: '1 1 280px', maxWidth: 340, paddingTop: 18 }}
             >
               <div style={{
                 background: 'white', borderRadius: 22, padding: '28px 22px',
@@ -354,29 +354,35 @@ const Home: React.FC = () => {
             <motion.div
               variants={fadeUp(0.1)} initial="hidden" whileInView="show" viewport={{ once: true }}
               whileHover={{ y: -6, transition: { duration: 0.3 } }}
-              style={{ flex: '1 1 280px', maxWidth: 340, position: 'relative' }}
+              style={{ flex: '1 1 280px', maxWidth: 340, position: 'relative', paddingTop: 18 }}
             >
+              {/* Badge acima do card */}
               <div style={{
-                background: 'white', borderRadius: 22, padding: '42px 22px 28px',
-                position: 'relative', boxShadow: '0 8px 40px rgba(134,239,172,.25)',
+                position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                background: 'linear-gradient(135deg,#064e3b,#065f46,#047857)',
+                border: '1px solid rgba(134,239,172,.5)',
+                borderRadius: 50, padding: '4px 18px',
+                whiteSpace: 'nowrap', fontSize: '.76rem', fontWeight: 700, color: '#86efac',
+                zIndex: 2,
+              }}>⭐ Mais escolhido</div>
+              <div style={{
+                background: 'linear-gradient(160deg,#052e16 0%,#064e3b 30%,#065f46 55%,#052e16 100%)',
+                borderRadius: 22, padding: '28px 22px',
+                position: 'relative', overflow: 'hidden',
+                border: '1px solid rgba(134,239,172,.35)',
+                boxShadow: '0 16px 48px rgba(5,46,22,.5), inset 0 1px 0 rgba(134,239,172,.2)',
               }}>
-                <div style={{
-                  position: 'absolute', inset: 0, borderRadius: 22, padding: 2,
-                  background: 'linear-gradient(135deg,#86efac,#2dd4bf,#bef264)',
-                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  WebkitMaskComposite: 'xor', maskComposite: 'exclude',
-                  pointerEvents: 'none', opacity: 0.85,
-                }} />
-                <div style={{
-                  position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-                  background: 'linear-gradient(135deg,#86efac,#2dd4bf)',
-                  borderRadius: 50, padding: '4px 18px',
-                  whiteSpace: 'nowrap', fontSize: '.76rem', fontWeight: 700, color: 'white',
-                }}>⭐ Mais escolhido</div>
-                <p style={{ fontSize: '.8rem', color: '#22c55e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 6 }}>Premium</p>
-                <p className="pf" style={{ fontSize: '2.8rem', fontWeight: 700, color: '#052e16' }}>R$79</p>
-                <p style={{ fontSize: '.82rem', color: '#4d7c5f', marginBottom: 4 }}>pagamento único · 3 anos online</p>
-                <div style={{ height: 2, borderRadius: 2, margin: '14px 0 20px', background: 'linear-gradient(90deg,#86efac,#2dd4bf)' }} />
+                {/* Sheen animado */}
+                <style>{`
+                  @keyframes premiumSheen { 0%{left:-80%} 100%{left:140%} }
+                  .premium-sheen::before { content:''; position:absolute; top:0; left:-80%; width:50%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); transform:skewX(-18deg); animation:premiumSheen 4s ease-in-out infinite; pointer-events:none; }
+                `}</style>
+                <div className="premium-sheen" style={{ position:'absolute', inset:0, pointerEvents:'none' }} />
+
+                <p style={{ fontSize: '.8rem', color: '#86efac', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 6 }}>Premium</p>
+                <p className="pf" style={{ fontSize: '2.8rem', fontWeight: 700, color: '#f0fdf4', textShadow: '0 2px 12px rgba(0,0,0,.3)' }}>R$79</p>
+                <p style={{ fontSize: '.82rem', color: 'rgba(134,239,172,.65)', marginBottom: 4 }}>pagamento único · 3 anos online</p>
+                <div style={{ height: 1, borderRadius: 2, margin: '14px 0 20px', background: 'linear-gradient(90deg,transparent,rgba(134,239,172,.5),transparent)' }} />
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {[
                     '3 anos de acesso',
@@ -389,16 +395,17 @@ const Home: React.FC = () => {
                     'Tema de cores 🎨',
                     'Cápsula do tempo ⏳',
                   ].map((f) => (
-                    <li key={f} style={{ fontSize: '.93rem', display: 'flex', alignItems: 'center', gap: 6, color: '#374151' }}>
-                      <span style={{ color: '#4ade80' }}>✓</span> {f}
+                    <li key={f} style={{ fontSize: '.93rem', display: 'flex', alignItems: 'center', gap: 6, color: '#d1fae5' }}>
+                      <span style={{ color: '#86efac' }}>✓</span> {f}
                     </li>
                   ))}
                 </ul>
                 <button onClick={() => router.push('/form?plano=premium')} className="btn-teal"
                   style={{
                     ...btnGreen,
-                    background: 'linear-gradient(135deg,#a7f3d0,#2dd4bf,#0d9488)',
-                    boxShadow: '0 8px 24px rgba(45,212,191,.35)',
+                    background: 'linear-gradient(135deg,#86efac,#22c55e,#15803d)',
+                    boxShadow: '0 8px 24px rgba(34,197,94,.4)',
+                    color: '#052e16',
                     width: '100%', marginTop: 24,
                   }}>
                   Quero o Premium ⭐

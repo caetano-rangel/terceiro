@@ -62,20 +62,97 @@ function calcCountdown(dataFormatura: string): Countdown {
 
 
 /* ── Temas ── */
-const TEMAS: Record<string, { cor: string; gradient: string; light: string; badge: string; dark: string; heroBg: string }> = {
-  verde:    { cor: '#15803d', gradient: 'linear-gradient(135deg,#86efac,#22c55e,#15803d)', light: '#dcfce7', badge: '#15803d', dark: '#052e16', heroBg: 'linear-gradient(155deg,#052e16 0%,#064e3b 50%,#0d4d4d 100%)' },
-  roxo:     { cor: '#7c3aed', gradient: 'linear-gradient(135deg,#c4b5fd,#8b5cf6,#7c3aed)', light: '#ede9fe', badge: '#7c3aed', dark: '#2e1065', heroBg: 'linear-gradient(155deg,#2e1065 0%,#4c1d95 50%,#3b0764 100%)' },
-  rosa:     { cor: '#db2777', gradient: 'linear-gradient(135deg,#f9a8d4,#ec4899,#db2777)', light: '#fce7f3', badge: '#db2777', dark: '#831843', heroBg: 'linear-gradient(155deg,#831843 0%,#9d174d 50%,#701a75 100%)' },
-  azul:     { cor: '#1d4ed8', gradient: 'linear-gradient(135deg,#93c5fd,#3b82f6,#1d4ed8)', light: '#dbeafe', badge: '#1d4ed8', dark: '#1e3a8a', heroBg: 'linear-gradient(155deg,#1e3a8a 0%,#1e40af 50%,#172554 100%)' },
-  laranja:  { cor: '#c2410c', gradient: 'linear-gradient(135deg,#fdba74,#f97316,#c2410c)', light: '#ffedd5', badge: '#c2410c', dark: '#431407', heroBg: 'linear-gradient(155deg,#431407 0%,#7c2d12 50%,#450a0a 100%)' },
-  vermelho: { cor: '#b91c1c', gradient: 'linear-gradient(135deg,#fca5a5,#ef4444,#b91c1c)', light: '#fee2e2', badge: '#b91c1c', dark: '#450a0a', heroBg: 'linear-gradient(155deg,#450a0a 0%,#7f1d1d 50%,#3b0000 100%)' },
-  preto:    { cor: '#374151', gradient: 'linear-gradient(135deg,#9ca3af,#6b7280,#374151)', light: '#f3f4f6', badge: '#374151', dark: '#030712', heroBg: 'linear-gradient(155deg,#030712 0%,#111827 50%,#0f172a 100%)' },
-  cafe:     { cor: '#92400e', gradient: 'linear-gradient(135deg,#d97706,#b45309,#92400e)', light: '#fef3c7', badge: '#92400e', dark: '#1c0a00', heroBg: 'linear-gradient(155deg,#1c0a00 0%,#451a03 50%,#2c1200 100%)' },
-  dourado:  { cor: '#a16207', gradient: 'linear-gradient(135deg,#fde68a,#eab308,#a16207)', light: '#fefce8', badge: '#a16207', dark: '#1a1000', heroBg: 'linear-gradient(155deg,#1a1000 0%,#422006 50%,#1c1300 100%)' },
+const TEMAS: Record<string, {
+  cor: string; gradient: string; light: string; badge: string; dark: string; heroBg: string;
+  cardBg: string; cardBorder: string; cardShadow: string; cardText: string; cardSubText: string;
+  badgeBg: string; badgeBorder: string; badgeText: string;
+  btnBg: string; btnText: string; metallic: boolean;
+}> = {
+  verde: {
+    cor: '#15803d', gradient: 'linear-gradient(135deg,#86efac,#22c55e,#15803d)',
+    light: '#dcfce7', badge: '#15803d', dark: '#052e16',
+    heroBg: 'linear-gradient(155deg,#052e16 0%,#064e3b 50%,#0d4d4d 100%)',
+    cardBg: 'linear-gradient(160deg,#064e3b 0%,#065f46 40%,#047857 60%,#064e3b 100%)',
+    cardBorder: '#6ee7b7', cardShadow: 'rgba(4,120,87,.4)', cardText: '#d1fae5', cardSubText: '#a7f3d0',
+    badgeBg: 'rgba(110,231,183,.15)', badgeBorder: '#6ee7b7', badgeText: '#6ee7b7',
+    btnBg: 'linear-gradient(135deg,#6ee7b7,#34d399,#059669)', btnText: '#052e16', metallic: true,
+  },
+  roxo: {
+    cor: '#7c3aed', gradient: 'linear-gradient(135deg,#c4b5fd,#8b5cf6,#7c3aed)',
+    light: '#ede9fe', badge: '#7c3aed', dark: '#2e1065',
+    heroBg: 'linear-gradient(155deg,#2e1065 0%,#4c1d95 50%,#3b0764 100%)',
+    cardBg: 'linear-gradient(160deg,#2e1065 0%,#3b0764 40%,#4c1d95 60%,#2e1065 100%)',
+    cardBorder: '#a78bfa', cardShadow: 'rgba(109,40,217,.4)', cardText: '#ede9fe', cardSubText: '#c4b5fd',
+    badgeBg: 'rgba(167,139,250,.15)', badgeBorder: '#a78bfa', badgeText: '#a78bfa',
+    btnBg: 'linear-gradient(135deg,#a78bfa,#7c3aed,#6d28d9)', btnText: '#ffffff', metallic: true,
+  },
+  rosa: {
+    cor: '#db2777', gradient: 'linear-gradient(135deg,#f9a8d4,#ec4899,#db2777)',
+    light: '#fce7f3', badge: '#db2777', dark: '#831843',
+    heroBg: 'linear-gradient(155deg,#831843 0%,#9d174d 50%,#701a75 100%)',
+    cardBg: 'linear-gradient(160deg,#831843 0%,#9d174d 40%,#be185d 60%,#831843 100%)',
+    cardBorder: '#f9a8d4', cardShadow: 'rgba(190,24,93,.4)', cardText: '#fce7f3', cardSubText: '#fbcfe8',
+    badgeBg: 'rgba(249,168,212,.15)', badgeBorder: '#f9a8d4', badgeText: '#f9a8d4',
+    btnBg: 'linear-gradient(135deg,#f9a8d4,#ec4899,#db2777)', btnText: '#4a0023', metallic: true,
+  },
+  azul: {
+    cor: '#1d4ed8', gradient: 'linear-gradient(135deg,#93c5fd,#3b82f6,#1d4ed8)',
+    light: '#dbeafe', badge: '#1d4ed8', dark: '#1e3a8a',
+    heroBg: 'linear-gradient(155deg,#1e3a8a 0%,#1e40af 50%,#172554 100%)',
+    cardBg: 'linear-gradient(160deg,#1e3a8a 0%,#1e40af 40%,#2563eb 60%,#1e3a8a 100%)',
+    cardBorder: '#93c5fd', cardShadow: 'rgba(37,99,235,.4)', cardText: '#dbeafe', cardSubText: '#bfdbfe',
+    badgeBg: 'rgba(147,197,253,.15)', badgeBorder: '#93c5fd', badgeText: '#93c5fd',
+    btnBg: 'linear-gradient(135deg,#93c5fd,#3b82f6,#1d4ed8)', btnText: '#172554', metallic: true,
+  },
+  laranja: {
+    cor: '#c2410c', gradient: 'linear-gradient(135deg,#fdba74,#f97316,#c2410c)',
+    light: '#ffedd5', badge: '#c2410c', dark: '#431407',
+    heroBg: 'linear-gradient(155deg,#431407 0%,#7c2d12 50%,#450a0a 100%)',
+    cardBg: 'linear-gradient(160deg,#431407 0%,#7c2d12 40%,#9a3412 60%,#431407 100%)',
+    cardBorder: '#fdba74', cardShadow: 'rgba(194,65,12,.4)', cardText: '#ffedd5', cardSubText: '#fed7aa',
+    badgeBg: 'rgba(253,186,116,.15)', badgeBorder: '#fdba74', badgeText: '#fdba74',
+    btnBg: 'linear-gradient(135deg,#fdba74,#f97316,#c2410c)', btnText: '#431407', metallic: true,
+  },
+  vermelho: {
+    cor: '#b91c1c', gradient: 'linear-gradient(135deg,#fca5a5,#ef4444,#b91c1c)',
+    light: '#fee2e2', badge: '#b91c1c', dark: '#450a0a',
+    heroBg: 'linear-gradient(155deg,#450a0a 0%,#7f1d1d 50%,#3b0000 100%)',
+    cardBg: 'linear-gradient(160deg,#450a0a 0%,#7f1d1d 40%,#991b1b 60%,#450a0a 100%)',
+    cardBorder: '#fca5a5', cardShadow: 'rgba(153,27,27,.4)', cardText: '#fee2e2', cardSubText: '#fecaca',
+    badgeBg: 'rgba(252,165,165,.15)', badgeBorder: '#fca5a5', badgeText: '#fca5a5',
+    btnBg: 'linear-gradient(135deg,#fca5a5,#ef4444,#b91c1c)', btnText: '#450a0a', metallic: true,
+  },
+  preto: {
+    cor: '#374151', gradient: 'linear-gradient(135deg,#9ca3af,#6b7280,#374151)',
+    light: '#f3f4f6', badge: '#374151', dark: '#030712',
+    heroBg: 'linear-gradient(155deg,#030712 0%,#111827 50%,#0f172a 100%)',
+    cardBg: 'linear-gradient(160deg,#030712 0%,#111827 40%,#1f2937 60%,#030712 100%)',
+    cardBorder: '#9ca3af', cardShadow: 'rgba(0,0,0,.5)', cardText: '#f3f4f6', cardSubText: '#d1d5db',
+    badgeBg: 'rgba(156,163,175,.12)', badgeBorder: '#6b7280', badgeText: '#d1d5db',
+    btnBg: 'linear-gradient(135deg,#d1d5db,#9ca3af,#6b7280)', btnText: '#111827', metallic: true,
+  },
+  cafe: {
+    cor: '#92400e', gradient: 'linear-gradient(135deg,#d97706,#b45309,#92400e)',
+    light: '#fef3c7', badge: '#92400e', dark: '#1c0a00',
+    heroBg: 'linear-gradient(155deg,#1c0a00 0%,#451a03 50%,#2c1200 100%)',
+    cardBg: 'linear-gradient(160deg,#1c0a00 0%,#451a03 40%,#78350f 60%,#1c0a00 100%)',
+    cardBorder: '#fcd34d', cardShadow: 'rgba(120,53,15,.5)', cardText: '#fef3c7', cardSubText: '#fde68a',
+    badgeBg: 'rgba(252,211,77,.12)', badgeBorder: '#fcd34d', badgeText: '#fcd34d',
+    btnBg: 'linear-gradient(135deg,#fcd34d,#d97706,#92400e)', btnText: '#1c0a00', metallic: true,
+  },
+  dourado: {
+    cor: '#b8860b', gradient: 'linear-gradient(135deg,#d4a017,#b8860b,#9a7010)',
+    light: '#fef3c7', badge: '#b8860b', dark: '#1a1000',
+    heroBg: 'linear-gradient(160deg,#7b5900 0%,#b8860b 15%,#d4a017 30%,#9a7010 50%,#c8960e 65%,#7b5900 80%,#b08000 100%)',
+    cardBg: 'linear-gradient(160deg,#7b5900 0%,#b8860b 15%,#d4a017 30%,#9a7010 50%,#c8960e 65%,#7b5900 80%,#b08000 100%)',
+    cardBorder: '#d4a017', cardShadow: 'rgba(120,90,0,.6)', cardText: '#fef9e7', cardSubText: '#fde68a',
+    badgeBg: 'rgba(0,0,0,.25)', badgeBorder: 'rgba(218,165,17,.5)', badgeText: '#fcd34d',
+    btnBg: 'linear-gradient(135deg,#1a1000,#2d1f00)', btnText: '#daa520', metallic: true,
+  },
 };
 
 /* ── Galeria carrossel centralizado ── */
-function GaleriaCarrossel({ fotos, tema }: { fotos: string[]; tema: { cor: string; gradient: string; light: string; badge: string; dark: string; heroBg: string } }) {
+function GaleriaCarrossel({ fotos, tema }: { fotos: string[]; tema: typeof TEMAS[string] }) {
   const [active, setActive]     = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [lightbox, setLightbox] = useState(false);
@@ -433,8 +510,20 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
   return (
     <div style={{ fontFamily: "'Nunito',sans-serif", minHeight: '100vh', background: '#f6fdf8', color: '#052e16', overflowX: 'hidden' }}>
-
-
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap');
+        .pf { font-family: 'Playfair Display', Georgia, serif !important; }
+        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes sheen  { 0%{left:-80%} 100%{left:140%} }
+        .fade-up { animation: fadeUp .7s ease forwards; }
+        .float   { animation: float 3s ease-in-out infinite; }
+        .embla            { overflow: hidden; border-radius: 20px; }
+        .embla__container { display: flex; }
+        .embla__slide     { flex: 0 0 100%; }
+        .metallic-card { position: relative; overflow: hidden; }
+        .metallic-card::before { content:''; position:absolute; top:0; left:-80%; width:50%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent); transform:skewX(-18deg); animation:sheen 4s ease-in-out infinite; pointer-events:none; }
+      `}</style>
 
       {/* ── MODAL AUTH ── */}
       {authModal && (
@@ -444,7 +533,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
           <div onClick={e => e.stopPropagation()} style={{
-            background: 'white', borderRadius: 24, padding: '40px 32px',
+            borderRadius: 24, padding: '40px 32px',
             maxWidth: 400, width: '100%',
             boxShadow: '0 24px 80px rgba(0,0,0,.2)',
           }}>
@@ -517,37 +606,37 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
             {!countdown.passou ? (
               <>
-                <div style={{ background: 'white', borderRadius: 22, padding: '28px 20px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', marginBottom: 16 }}>
+                <div style={{ borderRadius: 22, padding: '28px 20px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.15)`, marginBottom: 16 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16 }}>
                     {[
                       { label: 'Dias',    value: countdown.dias },
                       { label: 'Horas',   value: countdown.horas },
                     ].map(({ label, value }) => (
                       <div key={label} style={{ textAlign: 'center' }}>
-                        <div className="pf" style={{ fontSize: '3rem', fontWeight: 700, color: tema.cor, lineHeight: 1 }}>{value}</div>
-                        <div style={{ fontSize: '.75rem', color: '#4d7c5f', marginTop: 4, fontWeight: 600 }}>{label}</div>
+                        <div className="pf" style={{ fontSize: '3rem', fontWeight: 700, color: tema.cardText, lineHeight: 1, textShadow: '0 2px 4px rgba(0,0,0,.3)' }}>{value}</div>
+                        <div style={{ fontSize: '.75rem', color: tema.cardSubText, marginTop: 4, fontWeight: 600 }}>{label}</div>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div style={{ background: `linear-gradient(135deg,${tema.light}40,${tema.light}20)`, borderRadius: 22, padding: '28px 20px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)' }}>
+                <div style={{ background: tema.cardBg, borderRadius: 22, padding: '28px 20px', border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.15)` }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16 }}>
                     {[
                       { label: 'Minutos',  value: countdown.minutos },
                       { label: 'Segundos', value: countdown.segundos },
                     ].map(({ label, value }) => (
                       <div key={label} style={{ textAlign: 'center' }}>
-                        <div className="pf" style={{ fontSize: '3rem', fontWeight: 700, color: tema.cor, lineHeight: 1 }}>{value}</div>
-                        <div style={{ fontSize: '.75rem', color: '#4d7c5f', marginTop: 4, fontWeight: 600 }}>{label}</div>
+                        <div className="pf" style={{ fontSize: '3rem', fontWeight: 700, color: tema.cardText, lineHeight: 1, textShadow: '0 2px 4px rgba(0,0,0,.3)' }}>{value}</div>
+                        <div style={{ fontSize: '.75rem', color: tema.cardSubText, marginTop: 4, fontWeight: 600 }}>{label}</div>
                       </div>
                     ))}
                   </div>
                 </div>
               </>
             ) : (
-              <div style={{ background: 'white', borderRadius: 22, padding: '32px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', textAlign: 'center' }}>
+              <div style={{ borderRadius: 22, padding: '32px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}`, textAlign: 'center' }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>🎓</div>
-                <p className="pf" style={{ fontSize: '1.4rem', color: tema.cor, fontWeight: 700 }}>Formatura realizada!</p>
+                <p className="pf" style={{ fontSize: '1.4rem', color: tema.cardText, fontWeight: 700 }}>Formatura realizada!</p>
                 <p style={{ color: '#4d7c5f', fontSize: '.9rem', marginTop: 8 }}>{formatarData(turma.dataFormatura)}</p>
               </div>
             )}
@@ -633,13 +722,13 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                 👥 A galera do {turma.nomeTurma}
               </span>
             </div>
-            <div style={{ background: 'white', borderRadius: 22, padding: '24px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)' }}>
+            <div style={{ borderRadius: 22, padding: '24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)` }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 12 }}>
                 {turma.alunos.map((aluno, i) => (
                   <div key={i} style={{
-                    background: `linear-gradient(135deg,${tema.light}40,${tema.light}80)`,
+                    background: 'rgba(255,255,255,.08)',
                     borderRadius: 14, padding: '14px 12px', textAlign: 'center',
-                    border: `1px solid ${tema.cor}20`,
+                    border: `1px solid ${tema.cardBorder}40`,
                     transition: 'transform .2s',
                   }}
                     onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
@@ -647,13 +736,13 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                   >
                     <div style={{
                       width: 40, height: 40, borderRadius: '50%',
-                      background: tema.gradient,
+                      background: tema.btnBg,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       margin: '0 auto 8px', fontSize: 18,
                     }}>🧑</div>
-                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#052e16', marginBottom: 2 }}>{aluno.nome}</div>
+                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: tema.cardText, marginBottom: 2 }}>{aluno.nome}</div>
                     {aluno.apelido && (
-                      <div style={{ fontSize: '.75rem', color: '#4d7c5f', fontStyle: 'italic' }}>&quot;{aluno.apelido}&quot;</div>
+                      <div style={{ fontSize: '.75rem', color: tema.cardSubText, fontStyle: 'italic' }}>&quot;{aluno.apelido}&quot;</div>
                     )}
                   </div>
                 ))}
@@ -670,9 +759,9 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                 ✍️ Mural da turma
               </span>
             </div>
-            <div style={{ background: 'white', borderRadius: 22, padding: '32px 28px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', position: 'relative' }}>
+            <div style={{ borderRadius: 22, padding: '32px 28px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)`, position: 'relative' }}>
               <div style={{ position: 'absolute', top: 16, left: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
-              <p style={{ fontSize: '1.05rem', color: '#4d7c5f', lineHeight: 1.8, fontStyle: 'italic', textAlign: 'center', paddingTop: 16, position: 'relative' }}>
+              <p style={{ fontSize: '1.05rem', color: tema.cardText, lineHeight: 1.8, fontStyle: 'italic', textAlign: 'center', paddingTop: 16, position: 'relative' }}>
                 {turma.mural}
               </p>
               <div style={{ position: 'absolute', bottom: 8, right: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
@@ -689,15 +778,15 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                 🎲 Curiosidades da turma
               </span>
             </div>
-            <div style={{ background: 'white', borderRadius: 22, padding: '28px 24px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)' }}>
+            <div style={{ borderRadius: 22, padding: '28px 24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}` }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {turma.curiosidades.filter(c => c.resposta).map((c, i) => (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 14,
                     padding: '13px 16px', borderRadius: 14,
                     background: i % 2 === 0
-                      ? `linear-gradient(135deg,${tema.light}80,${tema.light}40)`
-                      : `linear-gradient(135deg,${tema.light}40,${tema.light}80)`,
+                      ? 'rgba(255,255,255,.07)'
+                      : 'rgba(255,255,255,.04)',
                     border: `1px solid ${tema.light}`,
                     transition: 'transform .2s',
                   }}
@@ -708,10 +797,10 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                       {c.categoria.split(' ')[0]}
                     </div>
                     <div>
-                      <p style={{ fontSize: '.78rem', color: '#4d7c5f', margin: '0 0 2px' }}>
+                      <p style={{ fontSize: '.78rem', color: tema.cardSubText, margin: '0 0 2px' }}>
                         {c.categoria.split(' ').slice(1).join(' ')}
                       </p>
-                      <p style={{ fontSize: '.95rem', fontWeight: 700, color: '#052e16', margin: 0 }}>
+                      <p style={{ fontSize: '.95rem', fontWeight: 700, color: tema.cardText, margin: 0 }}>
                         {c.resposta}
                       </p>
                     </div>
@@ -731,7 +820,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                 🍎 Professor favorito
               </span>
             </div>
-            <div style={{ background: 'white', borderRadius: 22, padding: '28px 24px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', gap: 20 }}>
+            <div style={{ borderRadius: 22, padding: '28px 24px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', gap: 20 }}>
               <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg,${tema.light},${tema.light}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>
                 👨‍🏫
               </div>
@@ -753,7 +842,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
             </div>
             <a href={`https://instagram.com/${turma.instagram.replace('@','')}`} target="_blank" rel="noopener noreferrer"
               style={{ display: 'block', textDecoration: 'none' }}>
-              <div style={{ background: 'white', borderRadius: 22, padding: '20px 24px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', gap: 16, transition: 'transform .2s' }}
+              <div style={{ borderRadius: 22, padding: '20px 24px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', gap: 16, transition: 'transform .2s' }}
                 onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)')}
                 onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)')}>
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: 'linear-gradient(135deg,#f9a8d4,#ec4899,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
@@ -784,15 +873,15 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                 </span>
               </div>
               {aberta ? (
-                <div style={{ background: 'white', borderRadius: 22, padding: '32px 28px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', position: 'relative' }}>
+                <div style={{ borderRadius: 22, padding: '32px 28px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)`, position: 'relative' }}>
                   <div style={{ position: 'absolute', top: 16, left: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
-                  <p style={{ fontSize: '1.05rem', color: '#4d7c5f', lineHeight: 1.8, fontStyle: 'italic', textAlign: 'center', paddingTop: 16, position: 'relative' }}>
+                  <p style={{ fontSize: '1.05rem', color: tema.cardText, lineHeight: 1.8, fontStyle: 'italic', textAlign: 'center', paddingTop: 16, position: 'relative' }}>
                     {turma.capsulaMensagem}
                   </p>
                   <div style={{ position: 'absolute', bottom: 8, right: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
                 </div>
               ) : (
-                <div style={{ background: 'white', borderRadius: 22, padding: '32px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', textAlign: 'center' }}>
+                <div style={{ borderRadius: 22, padding: '32px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', textAlign: 'center' }}>
                   <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
                   <p className="pf" style={{ fontSize: '1.1rem', color: '#052e16', fontWeight: 700, marginBottom: 8 }}>
                     Cápsula lacrada
@@ -814,15 +903,15 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                 📱 QR Code exclusivo da turma
               </span>
             </div>
-            <div style={{ background: 'white', borderRadius: 22, padding: '32px', border: `1.5px solid ${tema.light}`, boxShadow: '0 4px 24px rgba(0,0,0,.06)', display: 'inline-block' }}>
+            <div style={{ borderRadius: 22, padding: '32px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}`, display: 'inline-block' }}>
               <img src={qrCodeUrl} alt="QR Code" style={{ width: 200, height: 200, borderRadius: 12, display: 'block', margin: '0 auto 16px' }} />
-              <p style={{ color: '#4d7c5f', fontSize: '.78rem', marginBottom: 16 }}>
+              <p style={{ color: tema.cardSubText, fontSize: '.78rem', marginBottom: 16 }}>
                 Escaneie para acessar esta página
               </p>
               <button onClick={downloadQR}
                 style={{
                   background: tema.gradient,
-                  color: 'white', border: 'none', padding: '12px 32px',
+                  color: tema.btnText, border: 'none', padding: '12px 32px',
                   borderRadius: 50, fontSize: '.9rem', fontWeight: 700, cursor: 'pointer',
                   boxShadow: '0 6px 20px rgba(34,197,94,.3)',
                   fontFamily: "'Nunito',sans-serif", transition: 'transform .2s',
