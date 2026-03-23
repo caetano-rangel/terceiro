@@ -362,6 +362,30 @@ function GaleriaCarrossel({ fotos, tema }: { fotos: string[]; tema: typeof TEMAS
   );
 }
 
+
+/* ── Cabeçalho de seção editável ── */
+function SectionHeader({ label, sectionKey, editingSection, authEmail, onEdit }: {
+  label: string; sectionKey: string; editingSection: string | null; authEmail: string; onEdit: () => void;
+}) {
+  if (!authEmail) return (
+    <span style={{ display: 'inline-block', borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', fontWeight: 700 }}>
+      {label}
+    </span>
+  );
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <span style={{ fontSize: '.8rem', fontWeight: 700 }}>{label}</span>
+      {editingSection !== sectionKey && (
+        <button onClick={onEdit} style={{
+          background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)',
+          borderRadius: 50, padding: '2px 10px', cursor: 'pointer',
+          fontSize: '.7rem', color: 'rgba(255,255,255,.8)', fontFamily: "'Nunito',sans-serif",
+        }}>✏️ Editar</button>
+      )}
+    </div>
+  );
+}
+
 /* ── Página ── */
 const TurmaPage: React.FC<PageProps> = ({ params }) => {
   const [slug, setSlug]           = useState<string | null>(null);
@@ -377,6 +401,13 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
   const [authLoading, setAuthLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [fotosEdit, setFotosEdit]   = useState<string[]>([]);
+  // Edição de conteúdo
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [muralEdit, setMuralEdit]           = useState('');
+  const [alunosEdit, setAlunosEdit]         = useState<Aluno[]>([]);
+  const [curiosidadesEdit, setCuriosidadesEdit] = useState<Curiosidade[]>([]);
+  const [sectionSaving, setSectionSaving]   = useState(false);
+  const [sectionError, setSectionError]     = useState('');
 
   /* ── Carrega dados ── */
   useEffect(() => {
@@ -391,8 +422,12 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
         .single();
 
       if (error || !data) { console.error('Erro:', error); return; }
-      setTurma(data as TurmaData);
-      setFotosEdit((data as TurmaData).fotos || []);
+      const t = data as TurmaData;
+      setTurma(t);
+      setFotosEdit(t.fotos || []);
+      setMuralEdit(t.mural || '');
+      setAlunosEdit(t.alunos || []);
+      setCuriosidadesEdit(t.curiosidades || []);
 
       const qr = await QRCode.toDataURL(
         `${process.env.NEXT_PUBLIC_BASE_URL}/${s}`,
@@ -438,7 +473,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
       if (res.status === 404) { setAuthError('Página não encontrada.'); return; }
       // Qualquer outro status que não 400 de ação inválida = email correto
       setAuthModal(false);
-      setEditMode(true);
+      setEditingSection('menu');
     } catch {
       setAuthError('Erro de conexão.');
     } finally {
@@ -491,6 +526,28 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
       setEditLoading(false);
       e.target.value = '';
     }
+  };
+
+  /* ── Salvar seção ── */
+  const saveSection = async (action: string, data: object) => {
+    if (!slug || !authEmail) return;
+    setSectionSaving(true); setSectionError('');
+    try {
+      const res  = await fetch('/api/edit-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, email: authEmail, action, data }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setSectionError(json.error || 'Erro ao salvar.'); return; }
+
+      // Atualiza turma local
+      if (action === 'save_mural' && turma)        setTurma({ ...turma, mural: (data as { mural: string }).mural });
+      if (action === 'save_alunos' && turma)       setTurma({ ...turma, alunos: json.alunos });
+      if (action === 'save_curiosidades' && turma) setTurma({ ...turma, curiosidades: (data as { curiosidades: Curiosidade[] }).curiosidades });
+      setEditingSection(null);
+    } catch { setSectionError('Erro de conexão.'); }
+    finally { setSectionSaving(false); }
   };
 
   /* ── Loading ── */
@@ -590,11 +647,59 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
           <span style={{ display: 'inline-block', background: 'rgba(255,255,255,.12)', borderRadius: 50, padding: '4px 16px', fontSize: '.75rem', fontWeight: 700, color: 'white', border: '1px solid rgba(255,255,255,.2)' }}>
             🎉 Formatura em {formatarData(turma.dataFormatura)}
           </span>
+        </div>
 
+        <div style={{ marginTop: 16 }}>
+          <button onClick={() => {
+            if (!authEmail) { setAuthModal(true); return; }
+            setEditingSection('menu');
+          }} style={{
+            background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.25)',
+            borderRadius: 50, padding: '6px 20px', cursor: 'pointer',
+            fontSize: '.75rem', color: 'rgba(255,255,255,.8)', fontFamily: "'Nunito',sans-serif",
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}>
+            ✏️ Editar página
+          </button>
         </div>
       </div>
 
-
+      {/* ── PAINEL DE EDIÇÃO ── */}
+      {editingSection === 'menu' && (
+        <div style={{ background: tema.dark, borderBottom: `1px solid ${tema.cardBorder}30`, padding: '20px 24px' }}>
+          <div style={{ maxWidth: 680, margin: '0 auto' }}>
+            <p style={{ fontSize: '.8rem', color: tema.cardSubText, marginBottom: 14, textAlign: 'center', letterSpacing: '.04em' }}>
+              O que deseja editar?
+            </p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {[
+                { key: 'fotos',  label: '📸 Fotos',  action: () => { setEditMode(true); setEditingSection(null); } },
+                { key: 'alunos', label: '👥 Galera', action: () => { setAlunosEdit([...turma.alunos]); setEditingSection('alunos'); setSectionError(''); } },
+                { key: 'mural',  label: '✍️ Mural',  action: () => { setMuralEdit(turma.mural || ''); setEditingSection('mural'); setSectionError(''); } },
+                ...(turma.plano === 'premium' && turma.curiosidades ? [{ key: 'curiosidades', label: '🎲 Curiosidades', action: () => { setCuriosidadesEdit([...turma.curiosidades!]); setEditingSection('curiosidades'); setSectionError(''); } }] : []),
+              ].map(({ key, label, action }) => (
+                <button key={key} onClick={action} style={{
+                  background: tema.cardBg, border: `1px solid ${tema.cardBorder}`,
+                  borderRadius: 50, padding: '8px 20px', cursor: 'pointer',
+                  fontSize: '.85rem', fontWeight: 700, color: tema.cardText,
+                  fontFamily: "'Nunito',sans-serif",
+                  boxShadow: `0 4px 14px ${tema.cardShadow}`,
+                }}>
+                  {label}
+                </button>
+              ))}
+              <button onClick={() => setEditingSection(null)} style={{
+                background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.15)',
+                borderRadius: 50, padding: '8px 20px', cursor: 'pointer',
+                fontSize: '.85rem', color: 'rgba(255,255,255,.5)',
+                fontFamily: "'Nunito',sans-serif",
+              }}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 20px 80px' }}>
 
@@ -688,32 +793,22 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
         {/* Botão gerenciar fotos / sair edição */}
         <div style={{ textAlign: 'center', marginTop: -36, marginBottom: 56 }}>
-          {editMode ? (
+          {editMode && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '.82rem', color: '#4d7c5f', fontWeight: 600 }}>
-                ✏️ {fotosEdit.length}/{turma?.plano === 'premium' ? 50 : 20} fotos
+              <span style={{ fontSize: '.82rem', color: tema.cardSubText, fontWeight: 600 }}>
+                {fotosEdit.length}/{turma?.plano === 'premium' ? 50 : 20} fotos
                 {editLoading && ' · Salvando...'}
               </span>
               <button onClick={() => setEditMode(false)}
                 style={{
-                  background: `linear-gradient(135deg,${tema.light},${tema.cor}40)`,
-                  border: `1px solid ${tema.light}`,
-                  color: tema.cor, borderRadius: 50, padding: '7px 18px',
+                  background: tema.cardBg, border: `1px solid ${tema.cardBorder}`,
+                  color: tema.cardText, borderRadius: 50, padding: '7px 18px',
                   fontSize: '.82rem', fontWeight: 700, cursor: 'pointer',
                   fontFamily: "'Nunito',sans-serif",
                 }}>
                 ✓ Sair da edição
               </button>
             </div>
-          ) : (
-            <button onClick={() => setAuthModal(true)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '.75rem', color: '#4d7c5f', fontFamily: "'Nunito',sans-serif",
-                opacity: .5, textDecoration: 'none',
-              }}>
-              🔒 Gerenciar fotos
-            </button>
           )}
         </div>
 
@@ -725,92 +820,156 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
                 👥 A galera do {turma.nomeTurma}
               </span>
             </div>
-            <div style={{ borderRadius: 22, padding: '24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)` }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 12 }}>
-                {turma.alunos.map((aluno, i) => (
-                  <div key={i} style={{
-                    background: 'rgba(255,255,255,.08)',
-                    borderRadius: 14, padding: '14px 12px', textAlign: 'center',
-                    border: `1px solid ${tema.cardBorder}40`,
-                    transition: 'transform .2s',
-                  }}
-                    onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
-                    onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
-                  >
-                    <div style={{
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: tema.btnBg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      margin: '0 auto 8px', fontSize: 18,
-                    }}>🧑</div>
-                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: tema.cardText, marginBottom: 2 }}>{aluno.nome}</div>
-                    {aluno.apelido && (
-                      <div style={{ fontSize: '.75rem', color: tema.cardSubText, fontStyle: 'italic' }}>&quot;{aluno.apelido}&quot;</div>
-                    )}
-                  </div>
-                ))}
+
+            {editingSection === 'alunos' ? (
+              <div style={{ borderRadius: 22, padding: '24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}` }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                  {alunosEdit.map((aluno, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input type="text" placeholder="Nome" value={aluno.nome}
+                        onChange={e => { const a = [...alunosEdit]; a[i] = { ...a[i], nome: e.target.value }; setAlunosEdit(a); }}
+                        style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: `1px solid ${tema.cardBorder}`, background: 'rgba(255,255,255,.1)', color: tema.cardText, fontSize: '.9rem', fontFamily: "'Nunito',sans-serif", outline: 'none' }} />
+                      <input type="text" placeholder="Apelido" value={aluno.apelido}
+                        onChange={e => { const a = [...alunosEdit]; a[i] = { ...a[i], apelido: e.target.value }; setAlunosEdit(a); }}
+                        style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: `1px solid ${tema.cardBorder}`, background: 'rgba(255,255,255,.1)', color: tema.cardText, fontSize: '.9rem', fontFamily: "'Nunito',sans-serif", outline: 'none' }} />
+                      {alunosEdit.length > 1 && (
+                        <button onClick={() => setAlunosEdit(alunosEdit.filter((_,idx) => idx !== i))}
+                          style={{ background: 'rgba(239,68,68,.2)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 10, padding: '10px 12px', cursor: 'pointer', color: '#fca5a5', fontSize: '.82rem', fontFamily: "'Nunito',sans-serif" }}>✕</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setAlunosEdit([...alunosEdit, { nome: '', apelido: '' }])}
+                  style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,.06)', border: `1.5px dashed ${tema.cardBorder}`, borderRadius: 10, cursor: 'pointer', color: tema.cardSubText, fontSize: '.85rem', fontWeight: 700, fontFamily: "'Nunito',sans-serif", marginBottom: 14 }}>
+                  + Adicionar aluno
+                </button>
+                {sectionError && <p style={{ color: '#fca5a5', fontSize: '.78rem', marginBottom: 8 }}>{sectionError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setEditingSection(null)}
+                    style={{ flex: 1, padding: '11px', background: 'rgba(255,255,255,.08)', border: `1px solid ${tema.cardBorder}`, borderRadius: 50, cursor: 'pointer', color: tema.cardSubText, fontWeight: 700, fontSize: '.88rem', fontFamily: "'Nunito',sans-serif" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={() => saveSection('save_alunos', { alunos: alunosEdit })} disabled={sectionSaving}
+                    style={{ flex: 2, padding: '11px', background: tema.btnBg, border: 'none', borderRadius: 50, cursor: sectionSaving ? 'wait' : 'pointer', color: tema.btnText, fontWeight: 700, fontSize: '.88rem', fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 14px ${tema.cardShadow}` }}>
+                    {sectionSaving ? 'Salvando...' : '✓ Salvar alunos'}
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ borderRadius: 22, padding: '24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)` }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 12 }}>
+                  {turma.alunos.map((aluno, i) => (
+                    <div key={i} style={{ background: 'rgba(255,255,255,.08)', borderRadius: 14, padding: '14px 12px', textAlign: 'center', border: `1px solid ${tema.cardBorder}40`, transition: 'transform .2s' }}
+                      onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
+                      onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: tema.btnBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: 18 }}>🧑</div>
+                      <div style={{ fontSize: '.85rem', fontWeight: 700, color: tema.cardText, marginBottom: 2 }}>{aluno.nome}</div>
+                      {aluno.apelido && <div style={{ fontSize: '.75rem', color: tema.cardSubText, fontStyle: 'italic' }}>&quot;{aluno.apelido}&quot;</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* ── MURAL DE RECADOS ── */}
-        {turma.mural && (
+        {(turma.mural || authEmail) && (
           <div style={{ marginBottom: 56 }}>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <span style={{ display: 'inline-block', background: `linear-gradient(135deg,${tema.light},${tema.light}88)`, borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: tema.cor, fontWeight: 700 }}>
                 ✍️ Mural da turma
               </span>
             </div>
-            <div style={{ borderRadius: 22, padding: '32px 28px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)`, position: 'relative' }}>
-              <div style={{ position: 'absolute', top: 16, left: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
-              <p style={{ fontSize: '1.05rem', color: tema.cardText, lineHeight: 1.8, fontStyle: 'italic', textAlign: 'center', paddingTop: 16, position: 'relative' }}>
-                {turma.mural}
-              </p>
-              <div style={{ position: 'absolute', bottom: 8, right: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
-            </div>
+
+            {editingSection === 'mural' ? (
+              <div style={{ borderRadius: 22, padding: '28px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}` }}>
+                <textarea value={muralEdit} onChange={e => setMuralEdit(e.target.value)} rows={5}
+                  placeholder="Escreva a mensagem da turma..."
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 14, border: `1px solid ${tema.cardBorder}`, background: 'rgba(255,255,255,.1)', color: tema.cardText, fontSize: '1rem', fontFamily: "'Nunito',sans-serif", outline: 'none', resize: 'vertical', marginBottom: 14, boxSizing: 'border-box' } as React.CSSProperties} />
+                {sectionError && <p style={{ color: '#fca5a5', fontSize: '.78rem', marginBottom: 8 }}>{sectionError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setEditingSection(null)}
+                    style={{ flex: 1, padding: '11px', background: 'rgba(255,255,255,.08)', border: `1px solid ${tema.cardBorder}`, borderRadius: 50, cursor: 'pointer', color: tema.cardSubText, fontWeight: 700, fontSize: '.88rem', fontFamily: "'Nunito',sans-serif" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={() => saveSection('save_mural', { mural: muralEdit })} disabled={sectionSaving}
+                    style={{ flex: 2, padding: '11px', background: tema.btnBg, border: 'none', borderRadius: 50, cursor: sectionSaving ? 'wait' : 'pointer', color: tema.btnText, fontWeight: 700, fontSize: '.88rem', fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 14px ${tema.cardShadow}` }}>
+                    {sectionSaving ? 'Salvando...' : '✓ Salvar mural'}
+                  </button>
+                </div>
+              </div>
+            ) : turma.mural ? (
+              <div style={{ borderRadius: 22, padding: '32px 28px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)`, position: 'relative' }}>
+                <div style={{ position: 'absolute', top: 16, left: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
+                <p style={{ fontSize: '1.05rem', color: tema.cardText, lineHeight: 1.8, fontStyle: 'italic', textAlign: 'center', paddingTop: 16, position: 'relative' }}>{turma.mural}</p>
+                <div style={{ position: 'absolute', bottom: 8, right: 20, fontFamily: "'Playfair Display',serif", fontSize: '4rem', color: tema.light, lineHeight: 1, userSelect: 'none' }}>"</div>
+              </div>
+            ) : (
+              <div style={{ borderRadius: 22, padding: '28px', background: tema.cardBg, border: `1.5px dashed ${tema.cardBorder}`, textAlign: 'center' }}>
+                <p style={{ color: tema.cardSubText, fontSize: '.88rem' }}>Nenhuma mensagem ainda. Clique em ✏️ Editar para adicionar.</p>
+              </div>
+            )}
           </div>
         )}
 
 
         {/* ── CURIOSIDADES (premium) ── */}
-        {turma.plano === 'premium' && turma.curiosidades && turma.curiosidades.some(c => c.resposta) && (
+        {turma.plano === 'premium' && turma.curiosidades && (turma.curiosidades.some(c => c.resposta) || authEmail) && (
           <div style={{ marginBottom: 56 }}>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <span style={{ display: 'inline-block', background: `linear-gradient(135deg,${tema.light},${tema.light}88)`, borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: tema.cor, fontWeight: 700 }}>
                 🎲 Curiosidades da turma
               </span>
             </div>
-            <div style={{ borderRadius: 22, padding: '28px 24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}` }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {turma.curiosidades.filter(c => c.resposta).map((c, i) => (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '13px 16px', borderRadius: 14,
-                    background: i % 2 === 0
-                      ? 'rgba(255,255,255,.07)'
-                      : 'rgba(255,255,255,.04)',
-                    border: `1px solid ${tema.light}`,
-                    transition: 'transform .2s',
-                  }}
-                    onMouseEnter={e => (e.currentTarget.style.transform = 'translateX(5px)')}
-                    onMouseLeave={e => (e.currentTarget.style.transform = 'translateX(0)')}
-                  >
-                    <div style={{ flexShrink: 0, fontSize: '1.4rem', lineHeight: 1 }}>
-                      {c.categoria.split(' ')[0]}
-                    </div>
-                    <div>
-                      <p style={{ fontSize: '.78rem', color: tema.cardSubText, margin: '0 0 2px' }}>
-                        {c.categoria.split(' ').slice(1).join(' ')}
+
+            {editingSection === 'curiosidades' ? (
+              <div style={{ borderRadius: 22, padding: '28px 24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}` }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                  {curiosidadesEdit.map((c, i) => (
+                    <div key={i}>
+                      <p style={{ fontSize: '.78rem', color: tema.cardSubText, marginBottom: 4 }}>
+                        {c.categoria.split(' ')[0]} {c.categoria.split(' ').slice(1).join(' ')}
                       </p>
-                      <p style={{ fontSize: '.95rem', fontWeight: 700, color: tema.cardText, margin: 0 }}>
-                        {c.resposta}
-                      </p>
+                      <input type="text" placeholder="Nome do aluno" value={c.resposta}
+                        onChange={e => { const arr = [...curiosidadesEdit]; arr[i] = { ...arr[i], resposta: e.target.value }; setCuriosidadesEdit(arr); }}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${tema.cardBorder}`, background: 'rgba(255,255,255,.1)', color: tema.cardText, fontSize: '.9rem', fontFamily: "'Nunito',sans-serif", outline: 'none', boxSizing: 'border-box' } as React.CSSProperties} />
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                {sectionError && <p style={{ color: '#fca5a5', fontSize: '.78rem', marginBottom: 8 }}>{sectionError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setEditingSection(null)}
+                    style={{ flex: 1, padding: '11px', background: 'rgba(255,255,255,.08)', border: `1px solid ${tema.cardBorder}`, borderRadius: 50, cursor: 'pointer', color: tema.cardSubText, fontWeight: 700, fontSize: '.88rem', fontFamily: "'Nunito',sans-serif" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={() => saveSection('save_curiosidades', { curiosidades: curiosidadesEdit })} disabled={sectionSaving}
+                    style={{ flex: 2, padding: '11px', background: tema.btnBg, border: 'none', borderRadius: 50, cursor: sectionSaving ? 'wait' : 'pointer', color: tema.btnText, fontWeight: 700, fontSize: '.88rem', fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 14px ${tema.cardShadow}` }}>
+                    {sectionSaving ? 'Salvando...' : '✓ Salvar curiosidades'}
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : turma.curiosidades && turma.curiosidades.some(c => c.resposta) ? (
+              <div style={{ borderRadius: 22, padding: '28px 24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}` }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {turma.curiosidades.filter(c => c.resposta).map((c, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px', borderRadius: 14, background: i % 2 === 0 ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.04)', border: `1px solid ${tema.light}`, transition: 'transform .2s' }}
+                      onMouseEnter={e => (e.currentTarget.style.transform = 'translateX(5px)')}
+                      onMouseLeave={e => (e.currentTarget.style.transform = 'translateX(0)')}>
+                      <div style={{ flexShrink: 0, fontSize: '1.4rem', lineHeight: 1 }}>{c.categoria.split(' ')[0]}</div>
+                      <div>
+                        <p style={{ fontSize: '.78rem', color: tema.cardSubText, margin: '0 0 2px' }}>{c.categoria.split(' ').slice(1).join(' ')}</p>
+                        <p style={{ fontSize: '.95rem', fontWeight: 700, color: tema.cardText, margin: 0 }}>{c.resposta}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ borderRadius: 22, padding: '28px', background: tema.cardBg, border: `1.5px dashed ${tema.cardBorder}`, textAlign: 'center' }}>
+                <p style={{ color: tema.cardSubText, fontSize: '.88rem' }}>Nenhuma curiosidade ainda. Clique em ✏️ Editar para preencher.</p>
+              </div>
+            )}
           </div>
         )}
 
