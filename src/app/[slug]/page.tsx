@@ -401,6 +401,11 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
   const [authLoading, setAuthLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [fotosEdit, setFotosEdit]   = useState<string[]>([]);
+  // Reações
+  const [reacoes, setReacoes]         = useState<Record<number, Record<string, number>>>({});
+  const [minhaReacao, setMinhaReacao] = useState<Record<number, string>>({});
+  const [visitorId, setVisitorId]     = useState('');
+  const [hoverAluno, setHoverAluno]   = useState<number | null>(null);
   // Edição de conteúdo
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [muralEdit, setMuralEdit]           = useState('');
@@ -428,6 +433,25 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
       setMuralEdit(t.mural || '');
       setAlunosEdit(t.alunos || []);
       setCuriosidadesEdit(t.curiosidades || []);
+
+      // Visitor ID anônimo
+      let vid = localStorage.getItem('visitor_id');
+      if (!vid) { vid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('visitor_id', vid); }
+      setVisitorId(vid);
+
+      // Carrega reações
+      const rRes = await fetch(`/api/reactions?slug=${s}`);
+      const rData = await rRes.json();
+      if (rData.reacoes) {
+        setReacoes(rData.reacoes);
+        // Descobre as reações do visitante
+        const minhas: Record<number, string> = {};
+        const vidAtual = vid!;
+        const resDetalhe = await fetch(`/api/reactions?slug=${s}&visitorId=${vidAtual}`);
+        const detalhe = await resDetalhe.json();
+        if (detalhe.minhas) Object.assign(minhas, detalhe.minhas);
+        setMinhaReacao(minhas);
+      }
 
       const qr = await QRCode.toDataURL(
         `${process.env.NEXT_PUBLIC_BASE_URL}/${s}`,
@@ -526,6 +550,29 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
       setEditLoading(false);
       e.target.value = '';
     }
+  };
+
+  /* ── Reagir a aluno ── */
+  const reagir = async (alunoIndex: number, emoji: string) => {
+    if (!slug || !visitorId) return;
+    const atual = minhaReacao[alunoIndex];
+
+    // Otimista
+    setMinhaReacao(p => ({ ...p, [alunoIndex]: atual === emoji ? '' : emoji }));
+    setReacoes(p => {
+      const novo = { ...p };
+      const bloco = { ...(novo[alunoIndex] || {}) };
+      if (atual) bloco[atual] = Math.max((bloco[atual] || 1) - 1, 0);
+      if (atual !== emoji) bloco[emoji] = (bloco[emoji] || 0) + 1;
+      novo[alunoIndex] = bloco;
+      return novo;
+    });
+
+    await fetch('/api/reactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, alunoIndex, emoji, visitorId }),
+    });
   };
 
   /* ── Salvar seção ── */
@@ -857,16 +904,62 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
               </div>
             ) : (
               <div style={{ borderRadius: 22, padding: '24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}, inset 0 1px 0 rgba(255,255,255,.12)` }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 12 }}>
-                  {turma.alunos.map((aluno, i) => (
-                    <div key={i} style={{ background: 'rgba(255,255,255,.08)', borderRadius: 14, padding: '14px 12px', textAlign: 'center', border: `1px solid ${tema.cardBorder}40`, transition: 'transform .2s' }}
-                      onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
-                      onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: tema.btnBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: 18 }}>🧑</div>
-                      <div style={{ fontSize: '.85rem', fontWeight: 700, color: tema.cardText, marginBottom: 2 }}>{aluno.nome}</div>
-                      {aluno.apelido && <div style={{ fontSize: '.75rem', color: tema.cardSubText, fontStyle: 'italic' }}>&quot;{aluno.apelido}&quot;</div>}
-                    </div>
-                  ))}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 12 }}
+                onClick={e => { if ((e.target as HTMLElement).closest('[data-aluno-card]') === null) setHoverAluno(null); }}>
+                  {turma.alunos.map((aluno, i) => {
+                    const reac = reacoes[i] || {};
+                    const minha = minhaReacao[i] || '';
+                    const total = Object.values(reac).reduce((a, b) => a + b, 0);
+                    const emojis = ['❤️', '🔥', '😂', '👑'];
+                    return (
+                      <div key={i} data-aluno-card="true"
+                        style={{ background: 'rgba(255,255,255,.08)', borderRadius: 14, padding: '14px 12px', textAlign: 'center', border: `1px solid ${tema.cardBorder}40`, transition: 'transform .2s', position: 'relative', cursor: 'pointer' }}
+                        onMouseEnter={() => setHoverAluno(i)}
+                        onMouseLeave={() => setHoverAluno(null)}
+                        onClick={() => setHoverAluno(hoverAluno === i ? null : i)}
+                      >
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: tema.btnBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: 18 }}>🧑</div>
+                        <div style={{ fontSize: '.85rem', fontWeight: 700, color: tema.cardText, marginBottom: 2 }}>{aluno.nome}</div>
+                        {aluno.apelido && <div style={{ fontSize: '.75rem', color: tema.cardSubText, fontStyle: 'italic' }}>&quot;{aluno.apelido}&quot;</div>}
+
+                        {/* Total de reações */}
+                        {total > 0 && (
+                          <div style={{ fontSize: '.9rem', color: tema.cardSubText, marginTop: 6, opacity: .8 }}>
+                            {emojis.filter(e => reac[e] > 0).map(e => `${e}${reac[e]}`).join(' ')}
+                          </div>
+                        )}
+
+                          {/* Emojis — hover no desktop, clique no mobile */}
+                        <div style={{
+                          position: 'absolute', bottom: '105%', left: '50%',
+                          display: 'flex', gap: 4, background: 'rgba(0,0,0,.82)',
+                          borderRadius: 50, padding: '7px 12px',
+                          opacity: hoverAluno === i ? 1 : 0,
+                          pointerEvents: hoverAluno === i ? 'auto' : 'none',
+                          transition: 'opacity .2s, transform .2s',
+                          transform: `translateX(-50%) scale(${hoverAluno === i ? 1 : 0.85})`,
+                          zIndex: 10, whiteSpace: 'nowrap',
+                          boxShadow: '0 4px 24px rgba(0,0,0,.5)',
+                          border: '1px solid rgba(255,255,255,.12)',
+                        }}>
+                          {emojis.map(e => (
+                            <button key={e}
+                              onClick={ev => { ev.stopPropagation(); reagir(i, e); setHoverAluno(null); }}
+                              style={{
+                                background: minha === e ? 'rgba(255,255,255,.22)' : 'none',
+                                border: 'none', cursor: 'pointer', borderRadius: 50,
+                                padding: '3px 5px', fontSize: '.9rem',
+                                transform: minha === e ? 'scale(1.3)' : 'scale(1)',
+                                transition: 'transform .2s, background .2s',
+                                lineHeight: 1,
+                              }}>
+                              {e}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
