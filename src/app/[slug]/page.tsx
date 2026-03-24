@@ -39,6 +39,13 @@ interface Countdown {
   segundos: number;
   passou: boolean;
 }
+interface Postit {
+  id: number;
+  nome: string;
+  mensagem: string;
+  cor: string;
+  created_at: string;
+}
 interface PageProps { params: Promise<{ slug: string }>; }
 
 /* ── Countdown para a formatura ── */
@@ -401,6 +408,14 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
   const [authLoading, setAuthLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [fotosEdit, setFotosEdit]   = useState<string[]>([]);
+  // Post-its
+  const [postits, setPostits]           = useState<Postit[]>([]);
+  const [showPostitForm, setShowPostitForm] = useState(false);
+  const [postitNome, setPostitNome]     = useState('');
+  const [postitMsg, setPostitMsg]       = useState('');
+  const [postitCor, setPostitCor]       = useState('amarelo');
+  const [postitLoading, setPostitLoading] = useState(false);
+  const [postitError, setPostitError]   = useState('');
   // Reações
   const [reacoes, setReacoes]         = useState<Record<number, Record<string, number>>>({});
   const [minhaReacao, setMinhaReacao] = useState<Record<number, string>>({});
@@ -438,6 +453,11 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
       let vid = localStorage.getItem('visitor_id');
       if (!vid) { vid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('visitor_id', vid); }
       setVisitorId(vid);
+
+      // Carrega post-its
+      const pRes = await fetch(`/api/postits?slug=${s}`);
+      const pData = await pRes.json();
+      if (pData.postits) setPostits(pData.postits);
 
       // Carrega reações
       const rRes = await fetch(`/api/reactions?slug=${s}`);
@@ -573,6 +593,32 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slug, alunoIndex, emoji, visitorId }),
     });
+  };
+
+  /* ── Post-its ── */
+  const enviarPostit = async () => {
+    if (!postitMsg.trim()) { setPostitError('Escreva uma mensagem.'); return; }
+    setPostitLoading(true); setPostitError('');
+    try {
+      const res  = await fetch('/api/postits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, nome: postitNome, mensagem: postitMsg, cor: postitCor }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPostitError(data.error || 'Erro ao enviar.'); return; }
+      setPostits(p => [data.postit, ...p]);
+      setPostitMsg(''); setPostitNome('');
+      setShowPostitForm(false);
+    } catch { setPostitError('Erro de conexão.'); }
+    finally { setPostitLoading(false); }
+  };
+
+  const removerPostit = async (id: number) => {
+    if (!slug || !authEmail) return;
+    if (!confirm('Remover este post-it?')) return;
+    await fetch(`/api/postits?id=${id}&slug=${slug}&email=${encodeURIComponent(authEmail)}`, { method: 'DELETE' });
+    setPostits(p => p.filter(pt => pt.id !== id));
   };
 
   /* ── Salvar seção ── */
@@ -924,7 +970,7 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
 
                         {/* Total de reações */}
                         {total > 0 && (
-                          <div style={{ fontSize: '.9rem', color: tema.cardSubText, marginTop: 6, opacity: .8 }}>
+                          <div style={{ fontSize: '.7rem', color: tema.cardSubText, marginTop: 6, opacity: .8 }}>
                             {emojis.filter(e => reac[e] > 0).map(e => `${e}${reac[e]}`).join(' ')}
                           </div>
                         )}
@@ -1066,6 +1112,139 @@ const TurmaPage: React.FC<PageProps> = ({ params }) => {
           </div>
         )}
 
+
+        {/* ── POST-ITS ── */}
+        <div style={{ marginBottom: 56 }}>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <span style={{ display: 'inline-block', background: `linear-gradient(135deg,${tema.light},${tema.light}88)`, borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: tema.cor, fontWeight: 700 }}>
+              📌 Deixe seu recado
+            </span>
+          </div>
+
+          <style>{`@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400&display=swap');`}</style>
+
+          {/* Botão para abrir o formulário */}
+          {!showPostitForm ? (
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <button onClick={() => setShowPostitForm(true)}
+                style={{
+                  background: tema.btnBg, border: 'none', borderRadius: 50,
+                  padding: '12px 28px', cursor: 'pointer',
+                  color: tema.btnText, fontWeight: 700, fontSize: '.9rem',
+                  fontFamily: "'Nunito',sans-serif",
+                  boxShadow: `0 4px 14px ${tema.cardShadow}`,
+                }}>
+                ✍️ Escrever post-it
+              </button>
+            </div>
+          ) : (
+            <div style={{ borderRadius: 22, padding: '24px', background: tema.cardBg, border: `1.5px solid ${tema.cardBorder}`, boxShadow: `0 8px 32px ${tema.cardShadow}`, marginBottom: 20 }}>
+
+              {/* Seletor de cor */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '.78rem', color: tema.cardSubText, marginRight: 4 }}>Cor:</span>
+                {[
+                  { id: 'amarelo', bg: '#fef08a' },
+                  { id: 'rosa',    bg: '#f9a8d4' },
+                  { id: 'verde',   bg: '#86efac' },
+                  { id: 'azul',    bg: '#93c5fd' },
+                  { id: 'roxo',    bg: '#d8b4fe' },
+                  { id: 'laranja', bg: '#fdba74' },
+                ].map(c => (
+                  <button key={c.id} type="button" onClick={() => setPostitCor(c.id)}
+                    style={{
+                      width: 28, height: 28, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                      background: c.bg,
+                      outline: postitCor === c.id ? '3px solid rgba(255,255,255,.8)' : '2px solid transparent',
+                      outlineOffset: 2,
+                      transform: postitCor === c.id ? 'scale(1.2)' : 'scale(1)',
+                      transition: 'all .2s',
+                      boxShadow: '0 2px 8px rgba(0,0,0,.25)',
+                    }} />
+                ))}
+              </div>
+
+              <input type="text" placeholder="Seu nome (opcional)"
+                value={postitNome} onChange={e => setPostitNome(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${tema.cardBorder}`, background: 'rgba(255,255,255,.1)', color: tema.cardText, fontSize: '.9rem', fontFamily: "'Nunito',sans-serif", outline: 'none', marginBottom: 10, boxSizing: 'border-box' } as React.CSSProperties} />
+
+              <textarea placeholder="Escreva seu recado para a turma... (máx. 200 caracteres)"
+                value={postitMsg} onChange={e => { setPostitMsg(e.target.value.slice(0,200)); setPostitError(''); }}
+                rows={3}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${tema.cardBorder}`, background: 'rgba(255,255,255,.1)', color: tema.cardText, fontSize: '.9rem', fontFamily: "'Nunito',sans-serif", outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 6 } as React.CSSProperties} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <span style={{ fontSize: '.72rem', color: tema.cardSubText }}>{postitMsg.length}/200</span>
+                {postitError && <span style={{ fontSize: '.75rem', color: '#fca5a5' }}>{postitError}</span>}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => { setShowPostitForm(false); setPostitMsg(''); setPostitNome(''); setPostitError(''); }}
+                  style={{ flex: 1, padding: '11px', background: 'rgba(255,255,255,.08)', border: `1px solid ${tema.cardBorder}`, borderRadius: 50, cursor: 'pointer', color: tema.cardSubText, fontWeight: 700, fontSize: '.88rem', fontFamily: "'Nunito',sans-serif" }}>
+                  Cancelar
+                </button>
+                <button onClick={enviarPostit} disabled={postitLoading}
+                  style={{ flex: 2, padding: '11px', background: tema.btnBg, border: 'none', borderRadius: 50, cursor: postitLoading ? 'wait' : 'pointer', color: tema.btnText, fontWeight: 700, fontSize: '.9rem', fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 14px ${tema.cardShadow}` }}>
+                  {postitLoading ? 'Enviando...' : '📌 Colar post-it'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Grid de post-its */}
+          {postits.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 14 }}>
+              {postits.map((pt, i) => {
+                const cores: Record<string, [string, string]> = {
+                  amarelo: ['#fef08a','#713f12'],
+                  rosa:    ['#f9a8d4','#831843'],
+                  verde:   ['#86efac','#14532d'],
+                  azul:    ['#93c5fd','#1e3a8a'],
+                  roxo:    ['#d8b4fe','#3b0764'],
+                  laranja: ['#fdba74','#7c2d12'],
+                };
+                const [bg, txt] = cores[pt.cor] || cores['amarelo'];
+                const rot = [-2, 1.5, -1, 2, -0.5, 1][i % 6];
+                return (
+                  <div key={pt.id} style={{
+                    background: bg, borderRadius: 3, padding: '14px 12px 18px',
+                    transform: `rotate(${rot}deg)`,
+                    boxShadow: '3px 4px 12px rgba(0,0,0,.2), 0 1px 2px rgba(0,0,0,.1)',
+                    position: 'relative',
+                    transition: 'transform .2s, box-shadow .2s',
+                  }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'rotate(0deg) scale(1.04)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '4px 8px 20px rgba(0,0,0,.25)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = `rotate(${rot}deg)`; (e.currentTarget as HTMLDivElement).style.boxShadow = '3px 4px 12px rgba(0,0,0,.2)'; }}
+                  >
+                    {/* Fita adesiva no topo */}
+                    <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', width: 40, height: 16, background: 'rgba(255,255,255,.45)', borderRadius: 2 }} />
+
+                    <p style={{ fontFamily: "'Kalam',cursive", fontSize: '13px', color: txt, lineHeight: 1.6, marginBottom: 10 }}>
+                      {pt.mensagem}
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: "'Kalam',cursive", fontSize: '11px', color: txt, opacity: .6 }}>
+                        — {pt.nome}
+                      </span>
+                      {authEmail && (
+                        <button onClick={() => removerPostit(pt.id)}
+                          style={{ background: 'rgba(0,0,0,.12)', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: txt, padding: 0 }}>
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {postits.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '32px', opacity: .5 }}>
+              <p style={{ fontSize: '.88rem', color: tema.cardSubText }}>Nenhum recado ainda. Seja o primeiro!</p>
+            </div>
+          )}
+        </div>
 
         {/* ── PROFESSOR FAVORITO ── */}
         {(turma.professorNome || turma.professorMateria) && (
