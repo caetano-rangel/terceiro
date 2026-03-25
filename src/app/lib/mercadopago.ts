@@ -36,24 +36,23 @@ export async function createPreference(
 ): Promise<MercadoPagoPreferenceResponse> {
   const body: Record<string, unknown> = {
     items: [{
-      title:      params.description,
-      quantity:   1,
+      title:       params.description,
+      quantity:    1,
       unit_price: params.transactionAmount,
       currency_id: 'BRL',
     }],
     payer: { email: params.payer.email },
     external_reference: params.externalReference,
-    ...(!params.successUrl.includes('localhost') ? {
-      back_urls: {
-        success: params.successUrl,
-        failure: params.cancelUrl,
-        pending: params.successUrl,
-      },
-      auto_return: 'approved',
-    } : {}),
+    // REMOVA A CONDIÇÃO DO LOCALHOST AQUI:
+    back_urls: {
+      success: params.successUrl,
+      failure: params.cancelUrl,
+      pending: params.successUrl,
+    },
+    auto_return: 'approved',
     payment_methods: {
       excluded_payment_types: [{ id: 'credit_card' }, { id: 'debit_card' }, { id: 'ticket' }],
-      default_payment_method_id: 'pix',
+      // Dica: Se quiser focar em PIX no Checkout Pro, o MP exige pelo menos um meio não excluído
     },
   };
 
