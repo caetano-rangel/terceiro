@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 /* ── Tipos ── */
 type Plano = 'basico' | 'premium';
-type MetodoPagamento = 'card' | 'pix';
 type Aluno = { nome: string; apelido: string };
 type Curiosidade = { categoria: string; resposta: string };
 
@@ -18,9 +17,11 @@ type FormData = {
   email: string;
   alunos: Aluno[];
   mural: string;
+  // Básico
   professorNome: string;
   professorMateria: string;
   instagram: string;
+  // Premium
   curiosidades: Curiosidade[];
   capsulaData: string;
   capsulaMensagem: string;
@@ -98,95 +99,26 @@ function Field({ label, error, hint, children }: {
 function PremiumBadge() {
   return (
     <span style={{
-      display: 'inline-block', background: 'linear-gradient(135deg,#fde68a,#f59e0b)',
-      borderRadius: 50, padding: '1px 9px', fontSize: '.68rem', color: '#78350f',
-      fontWeight: 700, marginLeft: 6, verticalAlign: 'middle',
+      display: 'inline-block', marginLeft: 8,
+      background: 'linear-gradient(135deg,#f7fee7,#ecfccb)',
+      borderRadius: 50, padding: '2px 10px',
+      fontSize: '.7rem', color: '#3f6212', fontWeight: 700,
+      border: '1px solid #bef264', verticalAlign: 'middle',
     }}>⭐ Premium</span>
   );
 }
 
-/* ── SectionCard ── */
+/* ── Separador de seção ── */
 function SectionCard({ children, premium }: { children: React.ReactNode; premium?: boolean }) {
   return (
     <div style={{
-      background: 'white', borderRadius: 20, padding: '22px 20px', marginBottom: 20,
-      border: premium ? '1.5px solid rgba(253,230,138,.6)' : '1.5px solid #dcfce7',
-      boxShadow: premium
-        ? '0 4px 20px rgba(245,158,11,.08)'
-        : '0 4px 20px rgba(134,239,172,.12)',
+      background: 'white', borderRadius: 20, padding: '28px 24px',
+      border: premium ? '1.5px solid #bef264' : '1.5px solid #dcfce7',
+      boxShadow: '0 4px 20px rgba(134,239,172,.12)',
+      marginBottom: 20,
     }}>
       {children}
     </div>
-  );
-}
-
-/* ── Seletor de método de pagamento ── */
-function PaymentMethodSelector({
-  value,
-  onChange,
-  plano,
-}: {
-  value: MetodoPagamento;
-  onChange: (v: MetodoPagamento) => void;
-  plano: Plano;
-}) {
-  const preco = plano === 'premium' ? 'R$79' : 'R$39';
-  const options: { id: MetodoPagamento; label: string; sub: string; icon: string }[] = [
-    { id: 'pix',  label: 'PIX',    sub: `${preco} · aprovação imediata`,  icon: '⚡' },
-    { id: 'card', label: 'Cartão', sub: `${preco} · crédito ou débito`,   icon: '💳' },
-  ];
-
-  return (
-    <SectionCard>
-      <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 14 }}>
-        Como você quer pagar? 💰
-      </p>
-      <div style={{ display: 'flex', gap: 12 }}>
-        {options.map(opt => {
-          const selected = value === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => onChange(opt.id)}
-              style={{
-                flex: 1, padding: '16px 12px', borderRadius: 16, cursor: 'pointer',
-                fontFamily: "'Nunito',sans-serif", textAlign: 'center',
-                border: selected ? '2px solid #22c55e' : '1.5px solid #dcfce7',
-                background: selected
-                  ? 'linear-gradient(135deg,#f0fdf4,#dcfce7)'
-                  : 'white',
-                boxShadow: selected ? '0 4px 16px rgba(34,197,94,.2)' : 'none',
-                transition: 'all .2s',
-              }}
-            >
-              <div style={{ fontSize: '1.6rem', marginBottom: 6 }}>{opt.icon}</div>
-              <div style={{ fontWeight: 700, fontSize: '.95rem', color: '#052e16', marginBottom: 2 }}>
-                {opt.label}
-              </div>
-              <div style={{ fontSize: '.75rem', color: '#4d7c5f' }}>{opt.sub}</div>
-              {selected && (
-                <div style={{
-                  marginTop: 8, display: 'inline-block',
-                  background: 'linear-gradient(135deg,#86efac,#22c55e)',
-                  borderRadius: 50, padding: '2px 10px',
-                  fontSize: '.7rem', fontWeight: 700, color: 'white',
-                }}>✓ Selecionado</div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      {value === 'pix' && (
-        <p style={{
-          marginTop: 12, fontSize: '.78rem', color: '#4d7c5f',
-          background: '#f0fdf4', borderRadius: 10, padding: '8px 12px',
-          border: '1px solid #dcfce7',
-        }}>
-          💡 O QR Code aparece na próxima tela. Após o pagamento confirmado, você recebe o link por e-mail automaticamente.
-        </p>
-      )}
-    </SectionCard>
   );
 }
 
@@ -196,12 +128,11 @@ const Form = () => {
   const router = useRouter() as any;
   const searchParams = useSearchParams();
 
-  const [step, setStep]                       = useState<1 | 2>(1);
-  const [isSubmitting, setIsSubmitting]       = useState(false);
-  const [files, setFiles]                     = useState<FileList | null>(null);
-  const [fileError, setFileError]             = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors]         = useState<FieldErrors>({});
-  const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamento>('pix');
+  const [step, setStep]               = useState<1 | 2>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [files, setFiles]             = useState<FileList | null>(null);
+  const [fileError, setFileError]     = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [formData, setFormData] = useState<FormData>({
     plano: 'basico',
@@ -270,6 +201,7 @@ const Form = () => {
     });
   };
 
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files;
     if (!selected) return;
@@ -301,18 +233,17 @@ const Form = () => {
     if (!files || files.length < 1) { setFileError('Envie pelo menos 1 foto.'); return; }
 
     const payload = new FormData();
-    payload.append('plano',           formData.plano);
-    payload.append('nomeTurma',       formData.nomeTurma);
-    payload.append('escola',          formData.escola);
-    payload.append('cidade',          formData.cidade);
-    payload.append('dataFormatura',   formData.dataFormatura);
-    payload.append('email',           formData.email);
-    payload.append('mural',           formData.mural);
-    payload.append('alunos',          JSON.stringify(formData.alunos.filter(a => a.nome.trim())));
-    payload.append('professorNome',   formData.professorNome);
-    payload.append('professorMateria',formData.professorMateria);
-    payload.append('instagram',       formData.instagram);
-    payload.append('metodoPagamento', metodoPagamento); // ← novo campo
+    payload.append('plano',        formData.plano);
+    payload.append('nomeTurma',    formData.nomeTurma);
+    payload.append('escola',       formData.escola);
+    payload.append('cidade',       formData.cidade);
+    payload.append('dataFormatura', formData.dataFormatura);
+    payload.append('email',        formData.email);
+    payload.append('mural',        formData.mural);
+    payload.append('alunos',       JSON.stringify(formData.alunos.filter(a => a.nome.trim())));
+    payload.append('professorNome',    formData.professorNome);
+    payload.append('professorMateria', formData.professorMateria);
+    payload.append('instagram',    formData.instagram);
 
     if (formData.plano === 'premium') {
       payload.append('curiosidades',    JSON.stringify(formData.curiosidades));
@@ -333,24 +264,8 @@ const Form = () => {
       setIsSubmitting(true);
       const res  = await fetch('/api/create-checkout', { method: 'POST', body: payload });
       const data = await res.json();
-
-      if (data.url) {
-        // Cartão → redireciona para o Stripe
-        window.location.href = data.url;
-      } else if (data.pix) {
-        // PIX → redireciona para a tela do QR Code
-        const params = new URLSearchParams({
-          slug:         data.slug,
-          chargeId:     String(data.chargeId),
-          qrCode:       data.qrCode,
-          qrCodeBase64: data.qrCodeBase64,
-          expiresAt:    data.expiresAt ?? '',
-          ticketUrl:    data.ticketUrl ?? '',
-        });
-        router.push(`/pix?${params.toString()}`);
-      } else {
-        alert('Erro ao processar pedido.\n\n' + (data.error || 'Erro desconhecido'));
-      }
+      if (data.url) { window.location.href = data.url; }
+      else { alert('Erro ao processar pedido.\n\n' + (data.error || 'Erro desconhecido')); }
     } catch (err) {
       console.error('Erro no checkout:', err);
       alert('Erro de conexão. Verifique sua internet e tente novamente.');
@@ -413,12 +328,12 @@ const Form = () => {
           display: 'inline-block', background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
           borderRadius: 50, padding: '5px 18px', fontSize: '.8rem', color: '#15803d', fontWeight: 700, marginBottom: 14,
         }}>
-          {step === 1 ? '🎓 Dados da turma' : '📸 Fotos & pagamento'}
+          {step === 1 ? '🎓 Dados da turma' : '📸 Fotos & extras'}
         </span>
         <h1 className="pf" style={{ fontSize: 'clamp(1.6rem,4vw,2.4rem)', fontWeight: 700, lineHeight: 1.25, color: '#052e16' }}>
           {step === 1
             ? <><em style={{ color: '#15803d', fontStyle: 'italic' }}>Configure</em> a página</>
-            : <>Quase lá! <em style={{ color: '#15803d', fontStyle: 'italic' }}>Fotos & pagamento<br /></em></>
+            : <>Quase lá! <em style={{ color: '#15803d', fontStyle: 'italic' }}>Adicione as fotos<br /></em></>
           }
         </h1>
       </div>
@@ -522,7 +437,7 @@ const Form = () => {
               </button>
             </SectionCard>
 
-            {/* Professor favorito */}
+            {/* Professor favorito — Básico */}
             <SectionCard>
               <p style={{ fontSize: '.92rem', fontWeight: 700, color: '#15803d', marginBottom: 6 }}>
                 Professor favorito 🍎
@@ -537,7 +452,7 @@ const Form = () => {
               </Field>
             </SectionCard>
 
-            {/* Instagram */}
+            {/* Instagram — Básico */}
             <SectionCard>
               <Field label="Instagram da turma 📸"
                 hint="Aparece como link na página da turma.">
@@ -654,6 +569,7 @@ const Form = () => {
               </SectionCard>
             )}
 
+
             {/* Cápsula do tempo — Premium */}
             {formData.plano === 'premium' && (
               <SectionCard premium>
@@ -676,13 +592,6 @@ const Form = () => {
               </SectionCard>
             )}
 
-            {/* ── SELETOR DE PAGAMENTO ── */}
-            <PaymentMethodSelector
-              value={metodoPagamento}
-              onChange={setMetodoPagamento}
-              plano={formData.plano}
-            />
-
             {/* Resumo */}
             <div style={{
               background: 'linear-gradient(135deg,rgba(220,252,231,.8),rgba(204,251,241,.8))',
@@ -696,7 +605,6 @@ const Form = () => {
                 </p>
                 <p style={{ color: '#4d7c5f', fontSize: '.8rem' }}>
                   {formData.plano === 'premium' ? '3 anos · 50 fotos · Curiosidades · Cápsula · Tema · R$79' : '1 ano · 20 fotos · R$39'}
-                  {' · '}{metodoPagamento === 'pix' ? '⚡ PIX' : '💳 Cartão'}
                 </p>
               </div>
               <button type="button" onClick={() => setStep(1)}
@@ -717,7 +625,7 @@ const Form = () => {
                       <circle cx="12" cy="12" r="10" strokeOpacity=".25" />
                       <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
                     </svg>
-                  : metodoPagamento === 'pix' ? '⚡ Gerar QR Code PIX' : '💳 Ir para o pagamento'
+                  : 'Criar a página! 🎓'
                 }
               </button>
             </div>
@@ -742,7 +650,7 @@ const Form = () => {
             >{label}</button>
           ))}
         </div>
-        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>Copyright © 2026 TerceirON · Todos os direitos reservados</p>
+        <p style={{ color: '#1a4a28', fontSize: '.72rem' }}>Copyright © 2025 TerceirON · Todos os direitos reservados</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </footer>
     </div>
