@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Vercel Hobby suporta até 60s em funções de API
 
 import { NextRequest, NextResponse } from 'next/server';
-import { waitUntil } from '@vercel/functions';
 import { supabase } from '../../lib/supabaseClient';
 import { getPaymentStatus } from '../../lib/mercadopago';
 import { Resend } from 'resend';
@@ -49,61 +49,6 @@ async function sendEmail(email: string, slug: string, nomeTurma: string, plano: 
   }
 }
 
-// ── Processamento em background (evita timeout do MP) ─────────────────────
-async function processPayment(dataId: string) {
-  let payment;
-  try {
-    payment = await getPaymentStatus(dataId);
-  } catch (apiErr: any) {
-    if (apiErr.message.includes('404')) {
-      console.warn(`[MP] Pagamento ${dataId} não encontrado (404).`);
-      return;
-    }
-    throw apiErr;
-  }
-
-  if (payment.status !== 'approved') {
-    console.log(`[MP] Pagamento ${dataId} status: ${payment.status}. Aguardando...`);
-    return;
-  }
-
-  const slug = payment.externalReference;
-  if (!slug) {
-    console.error("❌ Pagamento sem external_reference (slug)");
-    return;
-  }
-
-  const { data: turma, error: fetchError } = await supabase
-    .from('turmas')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-
-  if (fetchError || !turma) {
-    console.error(`❌ Turma não encontrada para o slug: ${slug}`);
-    return;
-  }
-
-  if (turma.status === 'aprovado') {
-    console.log(`ℹ️ Turma ${slug} já estava aprovada.`);
-    return;
-  }
-
-  const expiresAt = calcularExpiracao(turma.plano);
-  const { error: updateError } = await supabase
-    .from('turmas')
-    .update({ status: 'aprovado', expiresAt })
-    .eq('slug', slug);
-
-  if (updateError) {
-    console.error("❌ Erro ao atualizar Supabase:", updateError);
-    throw updateError;
-  }
-
-  await sendEmail(turma.email, slug, turma.nomeTurma, turma.plano);
-  console.log(`✅ SUCESSO: Turma ${slug} aprovada e e-mail enviado.`);
-}
-
 // ── Handler Principal ──────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   console.log("--- RECEBENDO NOTIFICAÇÃO MERCADO PAGO ---");
@@ -128,16 +73,66 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    console.log(`🔍 Processamento iniciado para ID: ${dataId}`);
+    console.log(`🔍 Consultando pagamento ID: ${dataId}`);
 
-    // 3. Responde imediatamente ao MP (evita timeout/502)
-    //    e agenda o processamento pesado em background
-    waitUntil(
-      processPayment(dataId).catch(err =>
-        console.error("❌ Erro no processamento background:", err)
-      )
-    );
+    // 3. Consultar status oficial na API do Mercado Pago
+    let payment;
+    try {
+      payment = await getPaymentStatus(dataId);
+    } catch (apiErr: any) {
+      if (apiErr.message.includes('404')) {
+        console.warn(`[MP] Pagamento ${dataId} não encontrado (404).`);
+        return NextResponse.json({ ok: true });
+      }
+      throw apiErr;
+    }
 
+    // 4. Verificar se foi aprovado
+    if (payment.status !== 'approved') {
+      console.log(`[MP] Pagamento ${dataId} status: ${payment.status}. Ignorando...`);
+      return NextResponse.json({ ok: true });
+    }
+
+    const slug = payment.externalReference;
+    if (!slug) {
+      console.error("❌ Pagamento sem external_reference (slug)");
+      return NextResponse.json({ ok: true });
+    }
+
+    // 5. Buscar Turma no Supabase
+    const { data: turma, error: fetchError } = await supabase
+      .from('turmas')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+
+    if (fetchError || !turma) {
+      console.error(`❌ Turma não encontrada para o slug: ${slug}`);
+      return NextResponse.json({ ok: true });
+    }
+
+    // 6. Evitar duplicidade
+    if (turma.status === 'aprovado') {
+      console.log(`ℹ️ Turma ${slug} já estava aprovada.`);
+      return NextResponse.json({ ok: true });
+    }
+
+    // 7. Atualizar Status e Data de Expiração
+    const expiresAt = calcularExpiracao(turma.plano);
+    const { error: updateError } = await supabase
+      .from('turmas')
+      .update({ status: 'aprovado', expiresAt })
+      .eq('slug', slug);
+
+    if (updateError) {
+      console.error("❌ Erro ao atualizar Supabase:", updateError);
+      throw updateError;
+    }
+
+    // 8. Enviar E-mail de Confirmação
+    await sendEmail(turma.email, slug, turma.nomeTurma, turma.plano);
+
+    console.log(`✅ SUCESSO: Turma ${slug} aprovada e e-mail enviado.`);
     return NextResponse.json({ ok: true });
 
   } catch (error: any) {
