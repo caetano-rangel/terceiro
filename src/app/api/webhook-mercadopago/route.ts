@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Vercel Hobby suporta até 60s em funções de API
+export const maxDuration = 60; // Limite máximo de execução na Vercel
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../lib/supabaseClient';
@@ -8,7 +8,8 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ── Calcula data de expiração pelo plano ───────────────────────────────────
+// ── Funções Auxiliares ─────────────────────────────────────────────────────
+
 function calcularExpiracao(plano: string): string {
   const anos = plano === 'premium' ? 3 : 1;
   const data = new Date();
@@ -16,42 +17,37 @@ function calcularExpiracao(plano: string): string {
   return data.toISOString();
 }
 
-// ── E-mail de confirmação ──────────────────────────────────────────────────
 async function sendEmail(email: string, slug: string, nomeTurma: string, plano: string) {
   const url = `${process.env.NEXT_PUBLIC_BASE_URL}/${slug}`;
   const isPremium = plano === 'premium';
 
-  try {
-    await resend.emails.send({
-      from: 'TerceirON <contato@terceiron.com>',
-      replyTo: 'contato@terceiron.com',
-      to: email,
-      subject: `A página da ${nomeTurma} está no ar! 🎓`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
-          <div style="background: #f0fdf4; padding: 40px; text-align: center;">
-            <h1 style="color: #15803d; margin: 0;">TerceirON</h1>
-            <p style="color: #166534;">Sua formatura eternizada.</p>
-          </div>
-          <div style="padding: 30px;">
-            <h2 style="margin-top: 0;">Página liberada! 🎉</h2>
-            <p>A página da <strong>${nomeTurma}</strong> já está disponível para todos.</p>
-            <p>Plano: <strong>${isPremium ? 'Premium (3 anos)' : 'Básico (1 ano)'}</strong></p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${url}" style="background: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Acessar Página da Turma</a>
-            </div>
+  return resend.emails.send({
+    from: 'TerceirON <contato@terceiron.com>',
+    replyTo: 'contato@terceiron.com',
+    to: email,
+    subject: `A página da ${nomeTurma} está no ar! 🎓`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
+        <div style="background: #f0fdf4; padding: 40px; text-align: center;">
+          <h1 style="color: #15803d; margin: 0;">TerceirON</h1>
+        </div>
+        <div style="padding: 30px;">
+          <h2>Página liberada! 🎉</h2>
+          <p>A página da <strong>${nomeTurma}</strong> já está disponível.</p>
+          <p>Plano: <strong>${isPremium ? 'Premium (3 anos)' : 'Básico (1 ano)'}</strong></p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${url}" style="background: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Acessar Página</a>
           </div>
         </div>
-      `,
-    });
-  } catch (err) {
-    console.error("Erro ao enviar e-mail:", err);
-  }
+      </div>
+    `,
+  });
 }
 
-// ── Handler Principal ──────────────────────────────────────────────────────
+// ── Handler Principal (Otimizado) ──────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
-  console.log("--- RECEBENDO NOTIFICAÇÃO MERCADO PAGO ---");
+  console.log("--- RECEBENDO WEBHOOK MP ---");
 
   try {
     const bodyText = await req.text();
@@ -59,84 +55,72 @@ export async function POST(req: NextRequest) {
 
     const event = JSON.parse(bodyText);
 
-    // 1. Filtrar: Só nos interessam eventos de pagamento
+    // 1. Filtragem de evento
     if (event.type !== 'payment') {
       return NextResponse.json({ ok: true });
     }
 
-    // 2. Obter o ID do pagamento
     const dataId = event.data?.id || event.id;
-
-    // Ignorar IDs de teste do painel do MP
     if (!dataId || dataId === "123456") {
-      console.log("⚠️ ID de teste ignorado.");
       return NextResponse.json({ ok: true });
     }
 
-    console.log(`🔍 Consultando pagamento ID: ${dataId}`);
-
-    // 3. Consultar status oficial na API do Mercado Pago
-    let payment;
-    try {
-      payment = await getPaymentStatus(dataId);
-    } catch (apiErr: any) {
-      if (apiErr.message.includes('404')) {
-        console.warn(`[MP] Pagamento ${dataId} não encontrado (404).`);
-        return NextResponse.json({ ok: true });
-      }
-      throw apiErr;
-    }
-
-    // 4. Verificar se foi aprovado
+    // 2. Consulta rápida ao Mercado Pago
+    // Precisamos do 'await' aqui para saber se o pagamento é real
+    const payment = await getPaymentStatus(dataId);
+    
     if (payment.status !== 'approved') {
-      console.log(`[MP] Pagamento ${dataId} status: ${payment.status}. Ignorando...`);
+      console.log(`[MP] ID ${dataId} com status: ${payment.status}`);
       return NextResponse.json({ ok: true });
     }
 
     const slug = payment.externalReference;
     if (!slug) {
-      console.error("❌ Pagamento sem external_reference (slug)");
+      console.error("❌ Erro: external_reference ausente");
       return NextResponse.json({ ok: true });
     }
 
-    // 5. Buscar Turma no Supabase
+    // 3. Busca e atualização no Supabase (Processos rápidos)
     const { data: turma, error: fetchError } = await supabase
       .from('turmas')
-      .select('*')
+      .select('plano, nomeTurma, email, status')
       .eq('slug', slug)
       .single();
 
     if (fetchError || !turma) {
-      console.error(`❌ Turma não encontrada para o slug: ${slug}`);
+      console.error(`❌ Turma não encontrada: ${slug}`);
       return NextResponse.json({ ok: true });
     }
 
-    // 6. Evitar duplicidade
+    // Se já foi aprovado, encerramos aqui para poupar recursos
     if (turma.status === 'aprovado') {
-      console.log(`ℹ️ Turma ${slug} já estava aprovada.`);
       return NextResponse.json({ ok: true });
     }
 
-    // 7. Atualizar Status e Data de Expiração
     const expiresAt = calcularExpiracao(turma.plano);
+    
+    // Atualiza o banco de dados primeiro
     const { error: updateError } = await supabase
       .from('turmas')
       .update({ status: 'aprovado', expiresAt })
       .eq('slug', slug);
 
-    if (updateError) {
-      console.error("❌ Erro ao atualizar Supabase:", updateError);
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
-    // 8. Enviar E-mail de Confirmação
-    await sendEmail(turma.email, slug, turma.nomeTurma, turma.plano);
+    // 4. O PONTO CHAVE: Envio de E-mail SEM 'AWAIT'
+    // Disparamos o processo e deixamos ele rodando em background na Vercel
+    sendEmail(turma.email, slug, turma.nomeTurma, turma.plano)
+      .then(() => console.log(`✅ E-mail enviado com sucesso para ${turma.email}`))
+      .catch((err) => console.error("❌ Falha no envio de e-mail background:", err));
 
-    console.log(`✅ SUCESSO: Turma ${slug} aprovada e e-mail enviado.`);
-    return NextResponse.json({ ok: true });
+    console.log(`✅ Sucesso: Turma ${slug} aprovada.`);
+
+    // 5. Respondemos 200 IMEDIATAMENTE para evitar o timeout 502 do Mercado Pago
+    return NextResponse.json({ ok: true }, { status: 200 });
 
   } catch (error: any) {
-    console.error("❌ ERRO NO WEBHOOK:", error.message);
-    return NextResponse.json({ error: 'Erro processado' }, { status: 200 });
+    console.error("❌ Erro crítico no Webhook:", error.message);
+    // Retornamos 200 mesmo no erro para que o MP pare de reenviar notificações inúteis
+    return NextResponse.json({ ok: true }, { status: 200 });
   }
 }
