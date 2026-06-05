@@ -271,8 +271,49 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* ── VER EXEMPLO ── */}
+      <section style={{ padding: '0 24px 80px', background: '#f6fdf8' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          <motion.div
+            variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={{ once: true }}
+            style={{
+              background: 'linear-gradient(135deg,#dcfce7,#ccfbf1)',
+              borderRadius: 24, padding: '40px 32px', textAlign: 'center',
+              border: '1.5px solid #86efac',
+              boxShadow: '0 8px 32px rgba(134,239,172,.2)',
+            }}
+          >
+            <div style={{ fontSize: 44, marginBottom: 14 }}>👀</div>
+            <h2 className="pf" style={{ fontSize: '1.7rem', fontWeight: 700, color: '#052e16', marginBottom: 10 }}>
+              Veja um exemplo real
+            </h2>
+            <p style={{ fontSize: '.95rem', color: '#4d7c5f', lineHeight: 1.7, marginBottom: 28, maxWidth: 380, margin: '0 auto 28px' }}>
+              Acesse a página do <strong style={{ color: '#15803d' }}>3º A</strong> e veja exatamente como vai ficar a página da sua turma.
+            </p>
+            <a
+              href="https://www.terceiron.com/3-a"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-green"
+              style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg,#86efac,#22c55e,#15803d)',
+                color: 'white', padding: '14px 36px', borderRadius: 50,
+                fontSize: '1rem', fontWeight: 700, textDecoration: 'none',
+                boxShadow: '0 8px 24px rgba(34,197,94,.35)',
+                fontFamily: "'Nunito',sans-serif",
+                transition: 'transform .3s, box-shadow .3s',
+              }}
+            >
+              Ver exemplo do 3º A 🎓
+            </a>
+            <p style={{ marginTop: 14, fontSize: '.78rem', color: '#4d7c5f' }}>Abre em uma nova aba</p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── FEATURES ── */}
-      <section style={{ padding: '80px 24px', background: '#f6fdf8' }}>
+      <section style={{ padding: '60px 24px', background: '#f6fdf8' }}>
         <div style={{ maxWidth: 880, margin: '0 auto' }}>
           <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={{ once: true }}
             style={{ textAlign: 'center', marginBottom: 48 }}>
